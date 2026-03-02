@@ -2,137 +2,250 @@
 
 {% block title %}Dashboard{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
-{% block page_subtitle %}Overview of your travel business{% endblock %}
+{% block page_subtitle %}Welcome back! Here's what's happening today{% endblock %}
 
 {% block content %}
+<style>
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .stat-card {
+        animation: slideUp 0.5s ease-out forwards;
+        transition: all 0.3s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    .stat-card:nth-child(1) { animation-delay: 0.1s; }
+    .stat-card:nth-child(2) { animation-delay: 0.2s; }
+    .stat-card:nth-child(3) { animation-delay: 0.3s; }
+    .stat-card:nth-child(4) { animation-delay: 0.4s; }
+    .stat-card:nth-child(5) { animation-delay: 0.5s; }
+    
+    .gradient-blue { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .gradient-yellow { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .gradient-green { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .gradient-orange { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+    .gradient-purple { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
+    
+    .pulse-icon {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: .7; }
+    }
+</style>
+
 <!-- Stats Cards -->
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6 mb-6 sm:mb-8">
-    <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 border-l-4 border-blue-500">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-gray-600 text-xs sm:text-sm font-medium">Total Trips</p>
-                <p class="text-2xl sm:text-3xl font-bold text-gray-800 mt-1 sm:mt-2">{{ total_trips }}</p>
+    <!-- Total Trips Card -->
+    <div class="stat-card bg-white rounded-2xl shadow-xl overflow-hidden relative group">
+        <div class="absolute top-0 right-0 w-32 h-32 gradient-blue opacity-10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+        <div class="p-4 sm:p-6 relative z-10">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 gradient-blue rounded-xl flex items-center justify-center shadow-lg">
+                    <i class="fas fa-suitcase-rolling text-white text-xl sm:text-2xl"></i>
+                </div>
+                <span class="text-xs font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">All Time</span>
             </div>
-            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <i class="fas fa-suitcase text-blue-600 text-lg sm:text-xl"></i>
-            </div>
-        </div>
-    </div>
-
-    <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 border-l-4 border-yellow-500">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-gray-600 text-xs sm:text-sm font-medium">Pending Trips</p>
-                <p class="text-2xl sm:text-3xl font-bold text-gray-800 mt-1 sm:mt-2">{{ pending_trips }}</p>
-            </div>
-            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-100 rounded-full flex items-center justify-center">
-                <i class="fas fa-clock text-yellow-600 text-lg sm:text-xl"></i>
+            <p class="text-gray-500 text-xs sm:text-sm font-medium uppercase tracking-wide">Total Trips</p>
+            <p class="text-3xl sm:text-4xl font-bold text-gray-800 mt-2">{{ total_trips }}</p>
+            <div class="mt-3 flex items-center text-xs text-green-600">
+                <i class="fas fa-arrow-up mr-1"></i>
+                <span>Active bookings</span>
             </div>
         </div>
     </div>
 
-    <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 border-l-4 border-green-500">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-gray-600 text-xs sm:text-sm font-medium">Confirmed</p>
-                <p class="text-2xl sm:text-3xl font-bold text-gray-800 mt-1 sm:mt-2">{{ confirmed_bookings }}</p>
+    <!-- Pending Trips Card -->
+    <div class="stat-card bg-white rounded-2xl shadow-xl overflow-hidden relative group">
+        <div class="absolute top-0 right-0 w-32 h-32 gradient-yellow opacity-10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+        <div class="p-4 sm:p-6 relative z-10">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 gradient-yellow rounded-xl flex items-center justify-center shadow-lg">
+                    <i class="fas fa-hourglass-half text-white text-xl sm:text-2xl pulse-icon"></i>
+                </div>
+                <span class="text-xs font-semibold text-pink-600 bg-pink-50 px-3 py-1 rounded-full">Urgent</span>
             </div>
-            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <i class="fas fa-check-circle text-green-600 text-lg sm:text-xl"></i>
-            </div>
-        </div>
-    </div>
-
-    <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 border-l-4 border-orange-500">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-gray-600 text-xs sm:text-sm font-medium">Pending Payments</p>
-                <p class="text-2xl sm:text-3xl font-bold text-gray-800 mt-1 sm:mt-2">{{ pending_payments }}</p>
-            </div>
-            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                <i class="fas fa-credit-card text-orange-600 text-lg sm:text-xl"></i>
+            <p class="text-gray-500 text-xs sm:text-sm font-medium uppercase tracking-wide">Pending Trips</p>
+            <p class="text-3xl sm:text-4xl font-bold text-gray-800 mt-2">{{ pending_trips }}</p>
+            <div class="mt-3 flex items-center text-xs text-orange-600">
+                <i class="fas fa-exclamation-circle mr-1"></i>
+                <span>Needs attention</span>
             </div>
         </div>
     </div>
 
-    <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 border-l-4 border-purple-500">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-gray-600 text-xs sm:text-sm font-medium">Total Users</p>
-                <p class="text-2xl sm:text-3xl font-bold text-gray-800 mt-1 sm:mt-2">{{ total_users }}</p>
+    <!-- Confirmed Bookings Card -->
+    <div class="stat-card bg-white rounded-2xl shadow-xl overflow-hidden relative group">
+        <div class="absolute top-0 right-0 w-32 h-32 gradient-green opacity-10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+        <div class="p-4 sm:p-6 relative z-10">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 gradient-green rounded-xl flex items-center justify-center shadow-lg">
+                    <i class="fas fa-check-double text-white text-xl sm:text-2xl"></i>
+                </div>
+                <span class="text-xs font-semibold text-cyan-600 bg-cyan-50 px-3 py-1 rounded-full">Success</span>
             </div>
-            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                <i class="fas fa-users text-purple-600 text-lg sm:text-xl"></i>
+            <p class="text-gray-500 text-xs sm:text-sm font-medium uppercase tracking-wide">Confirmed</p>
+            <p class="text-3xl sm:text-4xl font-bold text-gray-800 mt-2">{{ confirmed_bookings }}</p>
+            <div class="mt-3 flex items-center text-xs text-green-600">
+                <i class="fas fa-check-circle mr-1"></i>
+                <span>Ready to go</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Payments Card -->
+    <div class="stat-card bg-white rounded-2xl shadow-xl overflow-hidden relative group">
+        <div class="absolute top-0 right-0 w-32 h-32 gradient-orange opacity-10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+        <div class="p-4 sm:p-6 relative z-10">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 gradient-orange rounded-xl flex items-center justify-center shadow-lg">
+                    <i class="fas fa-money-check-alt text-white text-xl sm:text-2xl pulse-icon"></i>
+                </div>
+                <span class="text-xs font-semibold text-orange-600 bg-orange-50 px-3 py-1 rounded-full">Review</span>
+            </div>
+            <p class="text-gray-500 text-xs sm:text-sm font-medium uppercase tracking-wide">Pending Payments</p>
+            <p class="text-3xl sm:text-4xl font-bold text-gray-800 mt-2">{{ pending_payments }}</p>
+            <div class="mt-3 flex items-center text-xs text-orange-600">
+                <i class="fas fa-clock mr-1"></i>
+                <span>Awaiting verification</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Users Card -->
+    <div class="stat-card bg-white rounded-2xl shadow-xl overflow-hidden relative group">
+        <div class="absolute top-0 right-0 w-32 h-32 gradient-purple opacity-10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+        <div class="p-4 sm:p-6 relative z-10">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 gradient-purple rounded-xl flex items-center justify-center shadow-lg">
+                    <i class="fas fa-users text-white text-xl sm:text-2xl"></i>
+                </div>
+                <span class="text-xs font-semibold text-purple-600 bg-purple-50 px-3 py-1 rounded-full">Active</span>
+            </div>
+            <p class="text-gray-500 text-xs sm:text-sm font-medium uppercase tracking-wide">Total Users</p>
+            <p class="text-3xl sm:text-4xl font-bold text-gray-800 mt-2">{{ total_users }}</p>
+            <div class="mt-3 flex items-center text-xs text-purple-600">
+                <i class="fas fa-user-plus mr-1"></i>
+                <span>Registered customers</span>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Quick Actions -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+    <a href="{% url 'admin_trip_requests' %}" class="bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl p-4 sm:p-5 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+        <i class="fas fa-plus-circle text-2xl sm:text-3xl mb-2"></i>
+        <p class="text-xs sm:text-sm font-semibold">New Trip Request</p>
+    </a>
+    <a href="{% url 'admin_payments' %}" class="bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl p-4 sm:p-5 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+        <i class="fas fa-file-invoice-dollar text-2xl sm:text-3xl mb-2"></i>
+        <p class="text-xs sm:text-sm font-semibold">Verify Payments</p>
+    </a>
+    <a href="{% url 'admin_bookings' %}" class="bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl p-4 sm:p-5 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+        <i class="fas fa-ticket-alt text-2xl sm:text-3xl mb-2"></i>
+        <p class="text-xs sm:text-sm font-semibold">View Bookings</p>
+    </a>
+    <a href="{% url 'admin_support' %}" class="bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl p-4 sm:p-5 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+        <i class="fas fa-headset text-2xl sm:text-3xl mb-2"></i>
+        <p class="text-xs sm:text-sm font-semibold">Support Messages</p>
+    </a>
+</div>
+
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
     <!-- Recent Trips -->
-    <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+    <div class="bg-white rounded-2xl shadow-xl p-4 sm:p-6 border-t-4 border-blue-500">
         <div class="flex items-center justify-between mb-4 sm:mb-6">
-            <h3 class="text-lg sm:text-xl font-bold text-gray-800">
-                <i class="fas fa-list mr-2 text-blue-600"></i>Recent Trip Requests
-            </h3>
-            <a href="{% url 'admin_trip_requests' %}" class="text-blue-600 hover:text-blue-800 text-xs sm:text-sm font-medium">
-                View All <i class="fas fa-arrow-right ml-1"></i>
+            <div class="flex items-center">
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-route text-blue-600 text-lg"></i>
+                </div>
+                <h3 class="text-lg sm:text-xl font-bold text-gray-800">Recent Trip Requests</h3>
+            </div>
+            <a href="{% url 'admin_trip_requests' %}" class="text-blue-600 hover:text-blue-800 text-xs sm:text-sm font-semibold flex items-center group">
+                View All 
+                <i class="fas fa-arrow-right ml-1 group-hover:translate-x-1 transition-transform"></i>
             </a>
         </div>
-        <div class="space-y-4">
+        <div class="space-y-3">
             {% for trip in recent_trips %}
-            <div class="border-l-4 {% if trip.status == 'pending' %}border-yellow-500{% elif trip.status == 'confirmed' %}border-green-500{% else %}border-blue-500{% endif %} bg-gray-50 p-4 rounded-r-lg hover:shadow-md transition">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="font-semibold text-gray-800">{{ trip.trip_type|title }}</p>
-                        <p class="text-sm text-gray-600 mt-1">
-                            <i class="fas fa-user mr-1"></i>{{ trip.user.email }}
+            <div class="group relative bg-gradient-to-r from-gray-50 to-white border border-gray-100 p-4 rounded-xl hover:shadow-lg transition-all duration-300 hover:border-blue-200">
+                <div class="absolute left-0 top-0 bottom-0 w-1 {% if trip.status == 'pending' %}bg-yellow-500{% elif trip.status == 'confirmed' %}bg-green-500{% else %}bg-blue-500{% endif %} rounded-l-xl"></div>
+                <div class="flex justify-between items-start ml-3">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="font-bold text-gray-800 text-sm sm:text-base">{{ trip.trip_type|title }}</span>
+                            <span class="px-2 py-0.5 rounded-full text-xs font-semibold {% if trip.status == 'pending' %}bg-yellow-100 text-yellow-700{% elif trip.status == 'confirmed' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                                {{ trip.status|title }}
+                            </span>
+                        </div>
+                        <p class="text-xs sm:text-sm text-gray-600 flex items-center mb-1">
+                            <i class="fas fa-user mr-2 text-gray-400"></i>{{ trip.user.email|truncatechars:30 }}
                         </p>
-                        <p class="text-sm text-gray-600">
-                            <i class="fas fa-calendar mr-1"></i>{{ trip.trip_date|date:"M d, Y" }}
+                        <p class="text-xs sm:text-sm text-gray-600 flex items-center">
+                            <i class="fas fa-calendar-alt mr-2 text-gray-400"></i>{{ trip.trip_date|date:"M d, Y" }}
                         </p>
                     </div>
-                    <span class="px-3 py-1 rounded-full text-xs font-semibold {% if trip.status == 'pending' %}bg-yellow-100 text-yellow-800{% elif trip.status == 'confirmed' %}bg-green-100 text-green-800{% else %}bg-blue-100 text-blue-800{% endif %}">
-                        {{ trip.status|title }}
-                    </span>
+                    <i class="fas fa-chevron-right text-gray-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all"></i>
                 </div>
             </div>
             {% empty %}
-            <p class="text-gray-500 text-center py-8">No recent trips</p>
+            <div class="text-center py-12">
+                <i class="fas fa-inbox text-gray-300 text-4xl mb-3"></i>
+                <p class="text-gray-500">No recent trips</p>
+            </div>
             {% endfor %}
         </div>
     </div>
 
     <!-- Pending Payments -->
-    <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+    <div class="bg-white rounded-2xl shadow-xl p-4 sm:p-6 border-t-4 border-orange-500">
         <div class="flex items-center justify-between mb-4 sm:mb-6">
-            <h3 class="text-lg sm:text-xl font-bold text-gray-800">
-                <i class="fas fa-exclamation-circle mr-2 text-orange-600"></i>Pending Payments
-            </h3>
-            <a href="{% url 'admin_payments' %}" class="text-blue-600 hover:text-blue-800 text-xs sm:text-sm font-medium">
-                View All <i class="fas fa-arrow-right ml-1"></i>
+            <div class="flex items-center">
+                <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-wallet text-orange-600 text-lg"></i>
+                </div>
+                <h3 class="text-lg sm:text-xl font-bold text-gray-800">Pending Payments</h3>
+            </div>
+            <a href="{% url 'admin_payments' %}" class="text-orange-600 hover:text-orange-800 text-xs sm:text-sm font-semibold flex items-center group">
+                View All 
+                <i class="fas fa-arrow-right ml-1 group-hover:translate-x-1 transition-transform"></i>
             </a>
         </div>
-        <div class="space-y-4">
+        <div class="space-y-3">
             {% for payment in pending_payment_list %}
-            <div class="border-l-4 border-orange-500 bg-gray-50 p-4 rounded-r-lg hover:shadow-md transition">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="font-semibold text-gray-800">${{ payment.amount }}</p>
-                        <p class="text-sm text-gray-600 mt-1">
-                            <i class="fas fa-user mr-1"></i>{{ payment.trip_request.user.email }}
+            <div class="group relative bg-gradient-to-r from-orange-50 to-white border border-orange-100 p-4 rounded-xl hover:shadow-lg transition-all duration-300 hover:border-orange-200">
+                <div class="absolute left-0 top-0 bottom-0 w-1 bg-orange-500 rounded-l-xl"></div>
+                <div class="flex justify-between items-center ml-3">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-xl sm:text-2xl font-bold bg-gradient-to-r from-orange-600 to-pink-600 bg-clip-text text-transparent">
+                                {% if payment.currency == 'MVR' %}MVR{% else %}${% endif %}{{ payment.amount }}
+                            </span>
+                            <span class="text-xs text-gray-500">{{ payment.currency }}</span>
+                        </div>
+                        <p class="text-xs sm:text-sm text-gray-600 flex items-center mb-1">
+                            <i class="fas fa-user mr-2 text-gray-400"></i>{{ payment.trip_request.user.email|truncatechars:30 }}
                         </p>
-                        <p class="text-sm text-gray-600">
-                            <i class="fas fa-credit-card mr-1"></i>{{ payment.payment_method|upper }}
+                        <p class="text-xs sm:text-sm text-gray-600 flex items-center">
+                            <i class="fas fa-credit-card mr-2 text-gray-400"></i>{{ payment.payment_method|upper }}
                         </p>
                     </div>
-                    <a href="{% url 'admin_verify_payment' payment.id %}" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium">
-                        Verify
+                    <a href="{% url 'admin_verify_payment' payment.id %}" class="px-3 sm:px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg transition-all text-xs sm:text-sm font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                        <i class="fas fa-check mr-1"></i>Verify
                     </a>
                 </div>
             </div>
             {% empty %}
-            <p class="text-gray-500 text-center py-8">No pending payments</p>
+            <div class="text-center py-12">
+                <i class="fas fa-check-circle text-gray-300 text-4xl mb-3"></i>
+                <p class="text-gray-500">No pending payments</p>
+            </div>
             {% endfor %}
         </div>
     </div>
@@ -140,28 +253,36 @@
 
 <!-- Support Messages -->
 {% if recent_messages %}
-<div class="mt-4 sm:mt-6 bg-white rounded-xl shadow-lg p-4 sm:p-6">
+<div class="mt-4 sm:mt-6 bg-white rounded-2xl shadow-xl p-4 sm:p-6 border-t-4 border-purple-500">
     <div class="flex items-center justify-between mb-4 sm:mb-6">
-        <h3 class="text-lg sm:text-xl font-bold text-gray-800">
-            <i class="fas fa-comments mr-2 text-purple-600"></i>Unread Support Messages
-        </h3>
-        <a href="{% url 'admin_support' %}" class="text-blue-600 hover:text-blue-800 text-xs sm:text-sm font-medium">
-            View All <i class="fas fa-arrow-right ml-1"></i>
+        <div class="flex items-center">
+            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                <i class="fas fa-comments text-purple-600 text-lg"></i>
+            </div>
+            <h3 class="text-lg sm:text-xl font-bold text-gray-800">Unread Support Messages</h3>
+        </div>
+        <a href="{% url 'admin_support' %}" class="text-purple-600 hover:text-purple-800 text-xs sm:text-sm font-semibold flex items-center group">
+            View All 
+            <i class="fas fa-arrow-right ml-1 group-hover:translate-x-1 transition-transform"></i>
         </a>
     </div>
-    <div class="space-y-4">
+    <div class="space-y-3">
         {% for msg in recent_messages %}
-        <div class="border-l-4 border-purple-500 bg-gray-50 p-4 rounded-r-lg hover:shadow-md transition">
-            <div class="flex justify-between items-start">
+        <div class="group relative bg-gradient-to-r from-purple-50 to-white border border-purple-100 p-4 rounded-xl hover:shadow-lg transition-all duration-300 hover:border-purple-200">
+            <div class="absolute left-0 top-0 bottom-0 w-1 bg-purple-500 rounded-l-xl"></div>
+            <div class="flex justify-between items-start ml-3">
                 <div class="flex-1">
-                    <p class="font-semibold text-gray-800">{{ msg.user.email }}</p>
-                    <p class="text-sm text-gray-600 mt-2">{{ msg.message|truncatewords:20 }}</p>
-                    <p class="text-xs text-gray-500 mt-2">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="font-bold text-gray-800 text-sm sm:text-base">{{ msg.user.email|truncatechars:35 }}</span>
+                        <span class="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">New</span>
+                    </div>
+                    <p class="text-xs sm:text-sm text-gray-600 mb-2 line-clamp-2">{{ msg.message|truncatewords:20 }}</p>
+                    <p class="text-xs text-gray-400 flex items-center">
                         <i class="fas fa-clock mr-1"></i>{{ msg.created_at|timesince }} ago
                     </p>
                 </div>
-                <a href="{% url 'admin_support' %}" class="ml-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm font-medium">
-                    Reply
+                <a href="{% url 'admin_support' %}" class="ml-4 px-3 sm:px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg transition-all text-xs sm:text-sm font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                    <i class="fas fa-reply mr-1"></i>Reply
                 </a>
             </div>
         </div>
