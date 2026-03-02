@@ -5,17 +5,17 @@
 {% block page_subtitle %}Customer support conversations{% endblock %}
 
 {% block content %}
-<div class="grid grid-cols-1 gap-6">
+<div class="grid grid-cols-1 gap-4 sm:gap-6">
     {% for conversation in conversations %}
-    <div class="bg-white rounded-xl shadow-lg p-6">
+    <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6">
         <!-- Customer Info -->
-        <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
+        <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-200 flex-wrap gap-2">
             <div>
-                <h3 class="text-lg font-bold text-gray-800">{{ conversation.user.email }}</h3>
-                <p class="text-sm text-gray-500">{{ conversation.user.phone_number|default:"No phone" }}</p>
+                <h3 class="text-base sm:text-lg font-bold text-gray-800">{{ conversation.user.email }}</h3>
+                <p class="text-xs sm:text-sm text-gray-500">{{ conversation.user.phone_number|default:"No phone" }}</p>
             </div>
             {% if conversation.unread_count > 0 %}
-            <span class="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+            <span class="bg-red-500 text-white px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold">
                 {{ conversation.unread_count }} unread
             </span>
             {% endif %}
@@ -47,17 +47,17 @@
         <!-- Reply Form -->
         <form method="POST" action="{% url 'admin_support_reply' conversation.user.id %}" class="mt-4">
             {% csrf_token %}
-            <div class="flex space-x-2">
+            <div class="flex flex-col sm:flex-row gap-2">
                 <textarea 
                     name="message" 
                     rows="2" 
                     required
-                    class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    class="flex-1 border border-gray-300 rounded-lg px-3 sm:px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                     placeholder="Type your reply..."
                 ></textarea>
                 <button 
                     type="submit"
-                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition font-semibold"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2 rounded-lg transition font-semibold text-sm sm:text-base whitespace-nowrap"
                 >
                     Send Reply
                 </button>
@@ -65,8 +65,8 @@
         </form>
     </div>
     {% empty %}
-    <div class="bg-white rounded-xl shadow-lg p-12 text-center">
-        <p class="text-gray-500 text-lg">No support messages yet</p>
+    <div class="bg-white rounded-xl shadow-lg p-8 sm:p-12 text-center">
+        <p class="text-gray-500 text-base sm:text-lg">No support messages yet</p>
     </div>
     {% endfor %}
 </div>

@@ -6,14 +6,14 @@
 
 {% block content %}
 <!-- Filter Tabs -->
-<div class="mb-6 flex space-x-2">
-    <a href="?status=all" class="px-4 py-2 rounded-lg {% if status_filter == 'all' %}bg-blue-600 text-white{% else %}bg-white text-gray-700 hover:bg-gray-50{% endif %} transition">
+<div class="mb-4 sm:mb-6 flex flex-wrap gap-2">
+    <a href="?status=all" class="px-3 sm:px-4 py-2 text-sm rounded-lg {% if status_filter == 'all' %}bg-blue-600 text-white{% else %}bg-white text-gray-700 hover:bg-gray-50{% endif %} transition whitespace-nowrap">
         All
     </a>
-    <a href="?status=pending" class="px-4 py-2 rounded-lg {% if status_filter == 'pending' %}bg-orange-600 text-white{% else %}bg-white text-gray-700 hover:bg-gray-50{% endif %} transition">
+    <a href="?status=pending" class="px-3 sm:px-4 py-2 text-sm rounded-lg {% if status_filter == 'pending' %}bg-orange-600 text-white{% else %}bg-white text-gray-700 hover:bg-gray-50{% endif %} transition whitespace-nowrap">
         Pending
     </a>
-    <a href="?status=verified" class="px-4 py-2 rounded-lg {% if status_filter == 'verified' %}bg-green-600 text-white{% else %}bg-white text-gray-700 hover:bg-gray-50{% endif %} transition">
+    <a href="?status=verified" class="px-3 sm:px-4 py-2 text-sm rounded-lg {% if status_filter == 'verified' %}bg-green-600 text-white{% else %}bg-white text-gray-700 hover:bg-gray-50{% endif %} transition whitespace-nowrap">
         Verified
     </a>
 </div>
@@ -24,55 +24,55 @@
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trip</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proof</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                    <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Trip</th>
+                    <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                    <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Method</th>
+                    <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Proof</th>
+                    <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 {% for payment in payments %}
                 <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-medium text-gray-900">{{ payment.trip_request.user.email }}</div>
-                        <div class="text-sm text-gray-500">{{ payment.trip_request.user.phone_number|default:"-" }}</div>
+                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
+                        <div class="text-xs sm:text-sm font-medium text-gray-900">{{ payment.trip_request.user.email }}</div>
+                        <div class="text-xs text-gray-500">{{ payment.trip_request.user.phone_number|default:"-" }}</div>
                     </td>
-                    <td class="px-6 py-4">
-                        <div class="text-sm text-gray-900">{{ payment.trip_request.get_trip_type_display }}</div>
-                        <div class="text-sm text-gray-500">{{ payment.trip_request.trip_date|date:"M d, Y" }}</div>
+                    <td class="px-3 sm:px-6 py-4 hidden md:table-cell">
+                        <div class="text-xs sm:text-sm text-gray-900">{{ payment.trip_request.get_trip_type_display }}</div>
+                        <div class="text-xs sm:text-sm text-gray-500">{{ payment.trip_request.trip_date|date:"M d, Y" }}</div>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="text-lg font-bold text-blue-600">
+                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
+                        <span class="text-base sm:text-lg font-bold text-blue-600">
                             {% if payment.currency == 'MVR' %}MVR{% else %}${% endif %} {{ payment.amount }}
                         </span>
                         <div class="text-xs text-gray-500">{{ payment.currency }}</div>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="text-sm text-gray-900">{{ payment.get_payment_method_display }}</span>
+                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap hidden sm:table-cell">
+                        <span class="text-xs sm:text-sm text-gray-900">{{ payment.get_payment_method_display }}</span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
+                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
                         {% if payment.payment_proof %}
-                        <a href="{{ payment.payment_proof.url }}" target="_blank" class="text-blue-600 hover:text-blue-800">
+                        <a href="{{ payment.payment_proof.url }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-xs sm:text-sm">
                             View Proof
                         </a>
                         {% else %}
                         <span class="text-gray-400">-</span>
                         {% endif %}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 sm:px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
                             {% if payment.status == 'pending' %}bg-orange-100 text-orange-800
                             {% elif payment.status == 'verified' %}bg-green-100 text-green-800
                             {% else %}bg-red-100 text-red-800{% endif %}">
                             {{ payment.status|upper }}
                         </span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm">
                         {% if payment.status == 'pending' %}
-                        <a href="{% url 'admin_verify_payment' payment.id %}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition">
+                        <a href="{% url 'admin_verify_payment' payment.id %}" class="bg-green-600 hover:bg-green-700 text-white px-2 sm:px-4 py-1 sm:py-2 rounded-lg transition text-xs sm:text-sm">
                             Verify
                         </a>
                         {% else %}
@@ -82,7 +82,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                    <td colspan="7" class="px-3 sm:px-6 py-8 text-center text-gray-500 text-sm">
                         No payments found
                     </td>
                 </tr>

@@ -12,8 +12,13 @@
     </style>
 </head>
 <body class="bg-gray-50">
+    <!-- Mobile Menu Button -->
+    <button id="mobileMenuBtn" class="lg:hidden fixed top-4 left-4 z-50 bg-blue-600 text-white p-3 rounded-lg shadow-lg">
+        <i class="fas fa-bars text-xl"></i>
+    </button>
+
     <!-- Sidebar -->
-    <div class="fixed inset-y-0 left-0 w-64 bg-gradient-to-b from-blue-600 to-blue-800 text-white shadow-2xl z-50">
+    <div id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-gradient-to-b from-blue-600 to-blue-800 text-white shadow-2xl z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
         <div class="p-6">
             <h1 class="text-2xl font-bold flex items-center">
                 <i class="fas fa-ship mr-3"></i>
@@ -66,11 +71,11 @@
     </div>
 
     <!-- Main Content -->
-    <div class="ml-64 p-8">
+    <div class="lg:ml-64 p-4 sm:p-6 md:p-8 pt-16 lg:pt-8">
         <!-- Header -->
-        <div class="mb-8">
-            <h2 class="text-3xl font-bold text-gray-800">{% block page_title %}Dashboard{% endblock %}</h2>
-            <p class="text-gray-600 mt-1">{% block page_subtitle %}Welcome to your admin panel{% endblock %}</p>
+        <div class="mb-6 sm:mb-8">
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-800">{% block page_title %}Dashboard{% endblock %}</h2>
+            <p class="text-sm sm:text-base text-gray-600 mt-1">{% block page_subtitle %}Welcome to your admin panel{% endblock %}</p>
         </div>
 
         <!-- Messages -->
@@ -88,6 +93,23 @@
     </div>
 
     <script>
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+        
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('-translate-x-full');
+            });
+            
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', (e) => {
+                if (window.innerWidth < 1024 && !sidebar.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            });
+        }
+
         // Auto-hide messages after 5 seconds
         setTimeout(() => {
             const messages = document.querySelectorAll('[class*="bg-green-100"], [class*="bg-red-100"], [class*="bg-blue-100"]');

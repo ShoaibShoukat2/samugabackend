@@ -10,51 +10,51 @@
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Booking Code</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trip Details</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">QR Code</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                    <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Booking Code</th>
+                    <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                    <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Trip Details</th>
+                    <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Date & Time</th>
+                    <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">QR Code</th>
+                    <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 {% for booking in bookings %}
                 <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="text-lg font-bold text-blue-600">{{ booking.booking_code }}</span>
+                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
+                        <span class="text-base sm:text-lg font-bold text-blue-600">{{ booking.booking_code }}</span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-medium text-gray-900">{{ booking.trip_request.user.email }}</div>
-                        <div class="text-sm text-gray-500">{{ booking.trip_request.user.phone_number|default:"-" }}</div>
+                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
+                        <div class="text-xs sm:text-sm font-medium text-gray-900">{{ booking.trip_request.user.email }}</div>
+                        <div class="text-xs text-gray-500">{{ booking.trip_request.user.phone_number|default:"-" }}</div>
                     </td>
-                    <td class="px-6 py-4">
-                        <div class="text-sm font-medium text-gray-900">{{ booking.trip_request.get_trip_type_display }}</div>
-                        <div class="text-sm text-gray-500">
+                    <td class="px-3 sm:px-6 py-4 hidden md:table-cell">
+                        <div class="text-xs sm:text-sm font-medium text-gray-900">{{ booking.trip_request.get_trip_type_display }}</div>
+                        <div class="text-xs sm:text-sm text-gray-500">
                             {{ booking.trip_request.pickup_location }} → {{ booking.trip_request.destination }}
                         </div>
-                        <div class="text-sm text-gray-500">
+                        <div class="text-xs sm:text-sm text-gray-500">
                             👥 {{ booking.trip_request.passenger_count }} passengers
                         </div>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm text-gray-900">📅 {{ booking.trip_request.trip_date|date:"M d, Y" }}</div>
-                        <div class="text-sm text-gray-500">🕐 {{ booking.trip_request.trip_time }}</div>
+                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
+                        <div class="text-xs sm:text-sm text-gray-900">📅 {{ booking.trip_request.trip_date|date:"M d, Y" }}</div>
+                        <div class="text-xs sm:text-sm text-gray-500">🕐 {{ booking.trip_request.trip_time }}</div>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
+                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap hidden sm:table-cell">
                         {% if booking.qr_code %}
-                        <img src="{{ booking.qr_code.url }}" alt="QR Code" class="w-16 h-16">
+                        <img src="{{ booking.qr_code.url }}" alt="QR Code" class="w-12 h-12 sm:w-16 sm:h-16">
                         {% else %}
                         <span class="text-gray-400">-</span>
                         {% endif %}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                         {{ booking.created_at|date:"M d, Y" }}
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                    <td colspan="6" class="px-3 sm:px-6 py-8 text-center text-gray-500 text-sm">
                         No bookings found
                     </td>
                 </tr>

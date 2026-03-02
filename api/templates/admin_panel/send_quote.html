@@ -5,11 +5,11 @@
 {% block page_subtitle %}Create quote for trip request{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto">
+<div class="max-w-4xl mx-auto">
     <!-- Trip Details Card -->
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
-        <h3 class="text-lg font-bold text-gray-800 mb-4">Trip Details</h3>
-        <div class="grid grid-cols-2 gap-4">
+    <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
+        <h3 class="text-base sm:text-lg font-bold text-gray-800 mb-4">Trip Details</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
                 <p class="text-sm text-gray-500">Customer</p>
                 <p class="font-semibold text-gray-800">{{ trip.user.email }}</p>
@@ -52,17 +52,17 @@
     </div>
 
     <!-- Quote Form -->
-    <div class="bg-white rounded-xl shadow-lg p-6">
-        <h3 class="text-lg font-bold text-gray-800 mb-4">Create Quote</h3>
+    <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+        <h3 class="text-base sm:text-lg font-bold text-gray-800 mb-4">Create Quote</h3>
         <form method="POST">
             {% csrf_token %}
             
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Currency</label>
+                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Currency</label>
                 <select 
                     name="currency" 
                     required
-                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                 >
                     <option value="USD">USD - US Dollar</option>
                     <option value="MVR">MVR - Maldivian Rufiyaa</option>
@@ -71,70 +71,70 @@
             </div>
 
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Amount</label>
+                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Amount</label>
                 <input 
                     type="number" 
                     name="amount" 
                     step="0.01" 
                     required
-                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                     placeholder="150.00"
                 >
             </div>
 
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Operator Name</label>
+                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Operator Name</label>
                 <input 
                     type="text" 
                     name="operator_name" 
                     required
-                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                     placeholder="Captain Ahmed"
                 >
             </div>
 
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Operator Contact</label>
+                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Operator Contact</label>
                 <input 
                     type="text" 
                     name="operator_contact" 
                     required
-                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                     placeholder="+960 777 7777"
                 >
             </div>
 
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Valid For (Days)</label>
+                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Valid For (Days)</label>
                 <input 
                     type="number" 
                     name="valid_days" 
                     value="7"
                     required
-                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                 >
             </div>
 
             <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Additional Notes (Optional)</label>
+                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Additional Notes (Optional)</label>
                 <textarea 
                     name="notes" 
                     rows="3"
-                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                     placeholder="Any additional information..."
                 ></textarea>
             </div>
 
-            <div class="flex space-x-3">
+            <div class="flex flex-col sm:flex-row gap-3">
                 <button 
                     type="submit"
-                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition"
+                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition text-sm sm:text-base"
                 >
                     Send Quote
                 </button>
                 <a 
                     href="{% url 'admin_trip_requests' %}"
-                    class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-4 rounded-lg transition text-center"
+                    class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-4 rounded-lg transition text-center text-sm sm:text-base"
                 >
                     Cancel
                 </a>
