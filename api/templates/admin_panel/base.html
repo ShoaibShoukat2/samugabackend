@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Panel{% endblock %} - SamugaTravels</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Sidebar -->
+    <div class="fixed inset-y-0 left-0 w-64 bg-gradient-to-b from-blue-600 to-blue-800 text-white shadow-2xl z-50">
+        <div class="p-6">
+            <h1 class="text-2xl font-bold flex items-center">
+                <i class="fas fa-ship mr-3"></i>
+                SamugaTravels
+            </h1>
+            <p class="text-blue-200 text-sm mt-1">Admin Panel</p>
+        </div>
+        
+        <nav class="mt-6">
+            <a href="{% url 'admin_dashboard' %}" class="flex items-center px-6 py-3 hover:bg-blue-700 transition {% if request.resolver_match.url_name == 'admin_dashboard' %}bg-blue-700 border-l-4 border-white{% endif %}">
+                <i class="fas fa-chart-line w-6"></i>
+                <span class="ml-3">Dashboard</span>
+            </a>
+            <a href="{% url 'admin_trip_requests' %}" class="flex items-center px-6 py-3 hover:bg-blue-700 transition {% if 'trip' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
+                <i class="fas fa-suitcase w-6"></i>
+                <span class="ml-3">Trip Requests</span>
+            </a>
+            <a href="{% url 'admin_payments' %}" class="flex items-center px-6 py-3 hover:bg-blue-700 transition {% if 'payment' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
+                <i class="fas fa-credit-card w-6"></i>
+                <span class="ml-3">Payments</span>
+            </a>
+            <a href="{% url 'admin_bookings' %}" class="flex items-center px-6 py-3 hover:bg-blue-700 transition {% if 'booking' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
+                <i class="fas fa-ticket-alt w-6"></i>
+                <span class="ml-3">Bookings</span>
+            </a>
+            <a href="{% url 'admin_support' %}" class="flex items-center px-6 py-3 hover:bg-blue-700 transition {% if 'support' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
+                <i class="fas fa-headset w-6"></i>
+                <span class="ml-3">Support</span>
+            </a>
+            <a href="{% url 'admin_users' %}" class="flex items-center px-6 py-3 hover:bg-blue-700 transition {% if 'user' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
+                <i class="fas fa-users w-6"></i>
+                <span class="ml-3">Users</span>
+            </a>
+        </nav>
+        
+        <div class="absolute bottom-0 w-full p-6 border-t border-blue-700">
+            <div class="flex items-center">
+                <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="font-semibold">{{ request.user.first_name|default:request.user.username }}</p>
+                    <p class="text-xs text-blue-200">Administrator</p>
+                </div>
+            </div>
+            <a href="{% url 'admin_logout' %}" class="mt-4 block text-center py-2 bg-blue-700 hover:bg-blue-600 rounded-lg transition">
+                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="ml-64 p-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-800">{% block page_title %}Dashboard{% endblock %}</h2>
+            <p class="text-gray-600 mt-1">{% block page_subtitle %}Welcome to your admin panel{% endblock %}</p>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="mb-4 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800 border border-green-200{% elif message.tags == 'error' %}bg-red-100 text-red-800 border border-red-200{% else %}bg-blue-100 text-blue-800 border border-blue-200{% endif %}">
+                    <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} mr-2"></i>
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Content -->
+        {% block content %}{% endblock %}
+    </div>
+
+    <script>
+        // Auto-hide messages after 5 seconds
+        setTimeout(() => {
+            const messages = document.querySelectorAll('[class*="bg-green-100"], [class*="bg-red-100"], [class*="bg-blue-100"]');
+            messages.forEach(msg => {
+                msg.style.transition = 'opacity 0.5s';
+                msg.style.opacity = '0';
+                setTimeout(() => msg.remove(), 500);
+            });
+        }, 5000);
+    </script>
+</body>
+</html>

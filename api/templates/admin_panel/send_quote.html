@@ -1,0 +1,145 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Send Quote{% endblock %}
+{% block page_title %}Send Quote{% endblock %}
+{% block page_subtitle %}Create quote for trip request{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <!-- Trip Details Card -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">Trip Details</h3>
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <p class="text-sm text-gray-500">Customer</p>
+                <p class="font-semibold text-gray-800">{{ trip.user.email }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500">Phone</p>
+                <p class="font-semibold text-gray-800">{{ trip.user.phone_number|default:"-" }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500">Trip Type</p>
+                <p class="font-semibold text-gray-800">{{ trip.get_trip_type_display }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500">Passengers</p>
+                <p class="font-semibold text-gray-800">{{ trip.passenger_count }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500">Pickup Location</p>
+                <p class="font-semibold text-gray-800">{{ trip.pickup_location }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500">Destination</p>
+                <p class="font-semibold text-gray-800">{{ trip.destination }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500">Date</p>
+                <p class="font-semibold text-gray-800">{{ trip.trip_date|date:"M d, Y" }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500">Time</p>
+                <p class="font-semibold text-gray-800">{{ trip.trip_time }}</p>
+            </div>
+        </div>
+        {% if trip.special_notes %}
+        <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p class="text-sm text-gray-500 mb-1">Special Notes</p>
+            <p class="text-gray-800">{{ trip.special_notes }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Quote Form -->
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">Create Quote</h3>
+        <form method="POST">
+            {% csrf_token %}
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Currency</label>
+                <select 
+                    name="currency" 
+                    required
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                    <option value="USD">USD - US Dollar</option>
+                    <option value="MVR">MVR - Maldivian Rufiyaa</option>
+                </select>
+                <p class="text-xs text-gray-500 mt-1">💱 Exchange Rate: 1 USD ≈ 15.42 MVR</p>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Amount</label>
+                <input 
+                    type="number" 
+                    name="amount" 
+                    step="0.01" 
+                    required
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="150.00"
+                >
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Operator Name</label>
+                <input 
+                    type="text" 
+                    name="operator_name" 
+                    required
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Captain Ahmed"
+                >
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Operator Contact</label>
+                <input 
+                    type="text" 
+                    name="operator_contact" 
+                    required
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="+960 777 7777"
+                >
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Valid For (Days)</label>
+                <input 
+                    type="number" 
+                    name="valid_days" 
+                    value="7"
+                    required
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Additional Notes (Optional)</label>
+                <textarea 
+                    name="notes" 
+                    rows="3"
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Any additional information..."
+                ></textarea>
+            </div>
+
+            <div class="flex space-x-3">
+                <button 
+                    type="submit"
+                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition"
+                >
+                    Send Quote
+                </button>
+                <a 
+                    href="{% url 'admin_trip_requests' %}"
+                    class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-4 rounded-lg transition text-center"
+                >
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
