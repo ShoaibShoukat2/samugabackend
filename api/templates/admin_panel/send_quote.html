@@ -27,6 +27,16 @@
                 <p class="font-semibold text-gray-800">{{ trip.passenger_count }}</p>
             </div>
             <div>
+                <p class="text-sm text-gray-500">Preferred Currency</p>
+                <p class="font-semibold text-gray-800">
+                    {% if trip.preferred_currency == 'MVR' %}
+                        🇲🇻 MVR (Maldivian Rufiyaa)
+                    {% else %}
+                        💵 USD (US Dollar)
+                    {% endif %}
+                </p>
+            </div>
+            <div>
                 <p class="text-sm text-gray-500">Pickup Location</p>
                 <p class="font-semibold text-gray-800">{{ trip.pickup_location }}</p>
             </div>

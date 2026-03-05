@@ -32,6 +32,11 @@ class TripRequest(models.Model):
         ('cancelled', 'Cancelled'),
     ]
     
+    CURRENCY_CHOICES = [
+        ('USD', 'US Dollar'),
+        ('MVR', 'Maldivian Rufiyaa'),
+    ]
+    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='trip_requests')
     trip_type = models.CharField(max_length=50, choices=TRIP_TYPES)
@@ -41,6 +46,7 @@ class TripRequest(models.Model):
     trip_time = models.TimeField()
     passenger_count = models.IntegerField()
     special_notes = models.TextField(blank=True)
+    preferred_currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default='USD')
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
