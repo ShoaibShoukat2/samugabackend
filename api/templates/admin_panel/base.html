@@ -9,6 +9,19 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; }
+        
+        /* Fallback styles to ensure buttons are always visible */
+        button, .btn, [type="submit"] {
+            display: inline-block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            cursor: pointer !important;
+        }
+        
+        /* Ensure all interactive elements are visible */
+        a, button, input, select, textarea {
+            visibility: visible !important;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -93,32 +106,43 @@
     </div>
 
     <script>
-        // Mobile menu toggle
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        const sidebar = document.getElementById('sidebar');
-        
-        if (mobileMenuBtn) {
-            mobileMenuBtn.addEventListener('click', () => {
-                sidebar.classList.toggle('-translate-x-full');
-            });
+        // Ensure DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile menu toggle
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const sidebar = document.getElementById('sidebar');
             
-            // Close sidebar when clicking outside on mobile
-            document.addEventListener('click', (e) => {
-                if (window.innerWidth < 1024 && !sidebar.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
-                    sidebar.classList.add('-translate-x-full');
-                }
-            });
-        }
+            if (mobileMenuBtn && sidebar) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    sidebar.classList.toggle('-translate-x-full');
+                });
+                
+                // Close sidebar when clicking outside on mobile
+                document.addEventListener('click', (e) => {
+                    if (window.innerWidth < 1024 && !sidebar.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+                        sidebar.classList.add('-translate-x-full');
+                    }
+                });
+            }
 
-        // Auto-hide messages after 5 seconds
-        setTimeout(() => {
-            const messages = document.querySelectorAll('[class*="bg-green-100"], [class*="bg-red-100"], [class*="bg-blue-100"]');
-            messages.forEach(msg => {
-                msg.style.transition = 'opacity 0.5s';
-                msg.style.opacity = '0';
-                setTimeout(() => msg.remove(), 500);
+            // Auto-hide messages after 5 seconds
+            setTimeout(() => {
+                const messages = document.querySelectorAll('[class*="bg-green-100"], [class*="bg-red-100"], [class*="bg-blue-100"]');
+                messages.forEach(msg => {
+                    msg.style.transition = 'opacity 0.5s';
+                    msg.style.opacity = '0';
+                    setTimeout(() => msg.remove(), 500);
+                });
+            }, 5000);
+            
+            // Force visibility of all buttons (fallback)
+            const buttons = document.querySelectorAll('button, [type="submit"], .btn');
+            buttons.forEach(btn => {
+                btn.style.visibility = 'visible';
+                btn.style.opacity = '1';
+                btn.style.display = 'inline-block';
             });
-        }, 5000);
+        });
     </script>
 </body>
 </html>
