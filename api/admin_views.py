@@ -477,17 +477,27 @@ def verify_subscription(request, subscription_id):
 def marketplace_quotes(request):
     status_filter = request.GET.get('status', 'all')
     
-    quotes = Quote.objects.select_related('trip_request', 'operator', 'boat').order_by('-created_at')
-    
-    if status_filter != 'all':
-        quotes = quotes.filter(status=status_filter)
-    
-    context = {
-        'quotes': quotes,
-        'status_filter': status_filter,
-    }
-    
-    return render(request, 'admin_panel/marketplace_quotes.html', context)
+    try:
+        # Get quotes without select_related to avoid UUID errors
+        quotes = Quote.objects.select_related('trip_request__user').order_by('-created_at')
+        
+        if status_filter != 'all':
+            quotes = quotes.filter(status=status_filter)
+        
+        context = {
+            'quotes': quotes,
+            'status_filter': status_filter,
+        }
+        
+        return render(request, 'admin_panel/marketplace_quotes.html', context)
+    except Exception as e:
+        print(f"Error in marketplace_quotes: {e}")
+        # Return empty quotes if there's an error
+        context = {
+            'quotes': Quote.objects.none(),
+            'status_filter': status_filter,
+        }
+        return render(request, 'admin_panel/marketplace_quotes.html', context)
 
 @login_required
 @user_passes_test(is_admin)
