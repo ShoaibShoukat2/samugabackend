@@ -18,18 +18,48 @@
     </noscript>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        /* Reset and base styles */
+        * {
+            box-sizing: border-box;
+        }
+        
         body { 
-            font-family: 'Inter', sans-serif; 
+            font-family: 'Inter', sans-serif !important; 
             background-color: #f9fafb !important;
             color: #111827 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow-x: hidden !important;
+        }
+        
+        /* Remove any dark overlays */
+        body::before, body::after, *::before, *::after {
+            background: none !important;
+            box-shadow: none !important;
+            backdrop-filter: none !important;
+        }
+        
+        /* Force remove any modal overlays */
+        .modal-backdrop, .overlay, .backdrop {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
         }
         
         /* Force visibility for all interactive elements */
-        button, .btn, [type="submit"], input[type="submit"], .button {
+        button, .btn, [type="submit"], input[type="submit"], .button, a {
             display: inline-block !important;
             visibility: visible !important;
             opacity: 1 !important;
             cursor: pointer !important;
+            pointer-events: auto !important;
+            z-index: 1000 !important;
+            position: relative !important;
+        }
+        
+        /* Button styling */
+        button, .btn, [type="submit"], input[type="submit"] {
             background-color: #3b82f6 !important;
             color: white !important;
             padding: 8px 16px !important;
@@ -37,32 +67,35 @@
             border: none !important;
             text-decoration: none !important;
             font-weight: 500 !important;
+            transition: all 0.2s ease !important;
         }
         
         button:hover, .btn:hover, [type="submit"]:hover {
             background-color: #2563eb !important;
+            transform: translateY(-1px) !important;
         }
         
-        /* Ensure all interactive elements are visible */
-        a, button, input, select, textarea, .clickable {
-            visibility: visible !important;
-            opacity: 1 !important;
+        /* Ensure main content is clickable */
+        .lg\\:ml-64 {
+            position: relative !important;
+            z-index: 10 !important;
+            background-color: #f9fafb !important;
+            min-height: 100vh !important;
         }
         
         /* Fix for dark theme issues */
-        .bg-white { background-color: white !important; }
+        .bg-white, .card, .panel, .stat-card {
+            background-color: white !important;
+            color: #111827 !important;
+            border: 1px solid #e5e7eb !important;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important;
+        }
+        
         .text-gray-800 { color: #1f2937 !important; }
         .text-gray-600 { color: #4b5563 !important; }
         .text-gray-900 { color: #111827 !important; }
         
-        /* Ensure cards are visible */
-        .bg-white, .card, .panel {
-            background-color: white !important;
-            color: #111827 !important;
-            border: 1px solid #e5e7eb !important;
-        }
-        
-        /* Fix table visibility */
+        /* Ensure tables are visible */
         table, th, td {
             background-color: white !important;
             color: #111827 !important;
@@ -82,6 +115,7 @@
         #sidebar {
             background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%) !important;
             color: white !important;
+            z-index: 50 !important;
         }
         
         /* Custom scrollbar for sidebar */
@@ -125,6 +159,34 @@
         .btn-warning, .bg-yellow-600 {
             background-color: #ca8a04 !important;
             color: white !important;
+        }
+        
+        /* Remove any potential dark overlays */
+        .dark, .dark-mode, .overlay-dark {
+            display: none !important;
+        }
+        
+        /* Force light theme */
+        html {
+            color-scheme: light !important;
+        }
+        
+        /* Ensure cards are properly styled */
+        .gradient-blue, .gradient-yellow, .gradient-green, .gradient-orange, .gradient-purple {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+        
+        /* Fix any potential z-index issues */
+        .stat-card {
+            position: relative !important;
+            z-index: 1 !important;
+        }
+        
+        /* Mobile menu button */
+        #mobileMenuBtn {
+            z-index: 60 !important;
+            position: fixed !important;
         }
     </style>
 </head>
@@ -245,7 +307,31 @@
     <script>
         // Ensure DOM is fully loaded
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Admin panel loaded');
+            console.log('Admin panel loaded - fixing UI issues');
+            
+            // Remove any dark overlays immediately
+            function removeDarkOverlays() {
+                // Remove common overlay classes
+                const overlays = document.querySelectorAll('.modal-backdrop, .overlay, .backdrop, .dark-overlay, .shadow-overlay');
+                overlays.forEach(overlay => {
+                    overlay.remove();
+                });
+                
+                // Remove dark mode classes
+                document.body.classList.remove('dark', 'dark-mode');
+                document.documentElement.classList.remove('dark', 'dark-mode');
+                
+                // Force light theme
+                document.documentElement.style.colorScheme = 'light';
+                document.body.style.backgroundColor = '#f9fafb';
+                document.body.style.color = '#111827';
+                
+                // Remove any potential dark filters
+                document.body.style.filter = 'none';
+                document.documentElement.style.filter = 'none';
+                
+                console.log('Dark overlays removed');
+            }
             
             // Mobile menu toggle
             const mobileMenuBtn = document.getElementById('mobileMenuBtn');
@@ -274,13 +360,15 @@
                 });
             }, 5000);
             
-            // Force visibility and styling of all buttons (multiple attempts)
-            function forceButtonVisibility() {
+            // Force visibility and styling of all interactive elements
+            function forceElementVisibility() {
+                console.log('Forcing element visibility');
+                
+                // Fix buttons
                 const buttons = document.querySelectorAll('button, [type="submit"], .btn, input[type="submit"], .button');
                 console.log('Found buttons:', buttons.length);
                 
                 buttons.forEach((btn, index) => {
-                    console.log('Fixing button', index, btn);
                     btn.style.visibility = 'visible';
                     btn.style.opacity = '1';
                     btn.style.display = 'inline-block';
@@ -291,13 +379,18 @@
                     btn.style.border = 'none';
                     btn.style.cursor = 'pointer';
                     btn.style.fontWeight = '500';
+                    btn.style.pointerEvents = 'auto';
+                    btn.style.zIndex = '1000';
+                    btn.style.position = 'relative';
                     
                     // Add hover effect
                     btn.addEventListener('mouseenter', function() {
                         this.style.backgroundColor = '#2563eb';
+                        this.style.transform = 'translateY(-1px)';
                     });
                     btn.addEventListener('mouseleave', function() {
                         this.style.backgroundColor = '#3b82f6';
+                        this.style.transform = 'translateY(0)';
                     });
                 });
                 
@@ -306,6 +399,9 @@
                 links.forEach(link => {
                     link.style.visibility = 'visible';
                     link.style.opacity = '1';
+                    link.style.pointerEvents = 'auto';
+                    link.style.zIndex = '1000';
+                    link.style.position = 'relative';
                 });
                 
                 // Fix form elements
@@ -316,21 +412,82 @@
                     input.style.backgroundColor = 'white';
                     input.style.color = '#111827';
                     input.style.border = '1px solid #d1d5db';
+                    input.style.pointerEvents = 'auto';
                 });
+                
+                // Fix cards and containers
+                const cards = document.querySelectorAll('.bg-white, .card, .panel, .stat-card');
+                cards.forEach(card => {
+                    card.style.backgroundColor = 'white';
+                    card.style.color = '#111827';
+                    card.style.visibility = 'visible';
+                    card.style.opacity = '1';
+                });
+                
+                // Ensure main content is clickable
+                const mainContent = document.querySelector('.lg\\:ml-64');
+                if (mainContent) {
+                    mainContent.style.position = 'relative';
+                    mainContent.style.zIndex = '10';
+                    mainContent.style.backgroundColor = '#f9fafb';
+                    mainContent.style.pointerEvents = 'auto';
+                }
             }
             
-            // Run immediately
-            forceButtonVisibility();
+            // Run fixes immediately
+            removeDarkOverlays();
+            forceElementVisibility();
             
-            // Run again after a short delay
-            setTimeout(forceButtonVisibility, 100);
-            setTimeout(forceButtonVisibility, 500);
-            setTimeout(forceButtonVisibility, 1000);
+            // Run again after short delays
+            setTimeout(() => {
+                removeDarkOverlays();
+                forceElementVisibility();
+            }, 100);
+            
+            setTimeout(() => {
+                removeDarkOverlays();
+                forceElementVisibility();
+            }, 500);
+            
+            setTimeout(() => {
+                removeDarkOverlays();
+                forceElementVisibility();
+            }, 1000);
+            
+            // Monitor for any new dark overlays
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'childList') {
+                        mutation.addedNodes.forEach(function(node) {
+                            if (node.nodeType === 1) { // Element node
+                                if (node.classList && (node.classList.contains('modal-backdrop') || 
+                                    node.classList.contains('overlay') || 
+                                    node.classList.contains('backdrop'))) {
+                                    console.log('Removing added overlay:', node);
+                                    node.remove();
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+            
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
         });
         
         // Also run when window loads
         window.addEventListener('load', function() {
-            console.log('Window loaded, forcing button visibility again');
+            console.log('Window loaded - final UI fix');
+            
+            // Final cleanup
+            document.body.style.backgroundColor = '#f9fafb';
+            document.body.style.color = '#111827';
+            document.body.style.filter = 'none';
+            
+            // Force button visibility one more time
             const buttons = document.querySelectorAll('button, [type="submit"], .btn, input[type="submit"]');
             buttons.forEach(btn => {
                 btn.style.visibility = 'visible';
@@ -338,8 +495,41 @@
                 btn.style.display = 'inline-block';
                 btn.style.backgroundColor = '#3b82f6';
                 btn.style.color = 'white';
+                btn.style.pointerEvents = 'auto';
+                btn.style.zIndex = '1000';
             });
         });
+        
+        // Emergency fix function that can be called from console
+        window.fixAdminUI = function() {
+            console.log('Emergency UI fix triggered');
+            
+            // Remove all potential overlays
+            const overlays = document.querySelectorAll('*');
+            overlays.forEach(el => {
+                const styles = window.getComputedStyle(el);
+                if (styles.backgroundColor === 'rgba(0, 0, 0, 0.5)' || 
+                    styles.backgroundColor === 'rgb(0, 0, 0)' ||
+                    styles.position === 'fixed' && styles.zIndex > 40) {
+                    if (!el.id || (el.id !== 'sidebar' && el.id !== 'mobileMenuBtn')) {
+                        el.style.display = 'none';
+                    }
+                }
+            });
+            
+            // Force everything visible
+            document.body.style.backgroundColor = '#f9fafb';
+            document.body.style.filter = 'none';
+            
+            const allElements = document.querySelectorAll('button, a, input, select, textarea');
+            allElements.forEach(el => {
+                el.style.pointerEvents = 'auto';
+                el.style.visibility = 'visible';
+                el.style.opacity = '1';
+            });
+            
+            console.log('Emergency fix completed');
+        };
     </script>
 </body>
 </html>
