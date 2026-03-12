@@ -45,10 +45,10 @@
                 <tr class="hover:bg-gray-50 transition">
                     <td class="px-6 py-4">
                         <div>
-                            <div class="font-semibold text-gray-900">{{ quote.trip_request.trip_type|title }}</div>
-                            <div class="text-sm text-gray-600">{{ quote.trip_request.pickup_location }} → {{ quote.trip_request.destination }}</div>
-                            <div class="text-xs text-gray-500">{{ quote.trip_request.trip_date|date:"M d, Y" }} • {{ quote.trip_request.passenger_count }} passengers</div>
-                            <div class="text-xs text-gray-500">Customer: {{ quote.trip_request.user.email|truncatechars:25 }}</div>
+                            <div class="font-semibold text-gray-900">{{ quote.trip_request.trip_type|title|default:"N/A" }}</div>
+                            <div class="text-sm text-gray-600">{{ quote.trip_request.from_location|default:"N/A" }} → {{ quote.trip_request.to_location|default:"N/A" }}</div>
+                            <div class="text-xs text-gray-500">{{ quote.trip_request.trip_date|date:"M d, Y"|default:"N/A" }} • {{ quote.trip_request.passengers|default:0 }} passengers</div>
+                            <div class="text-xs text-gray-500">Customer: {{ quote.trip_request.user.email|truncatechars:25|default:"N/A" }}</div>
                         </div>
                     </td>
                     <td class="px-6 py-4">
@@ -207,10 +207,10 @@
                     <div>
                         <p class="font-semibold text-gray-900">
                             {% if quote.operator %}{{ quote.operator.company_name }}{% else %}Admin{% endif %} 
-                            submitted quote for {{ quote.trip_request.trip_type }}
+                            submitted quote for {{ quote.trip_request.trip_type|default:"trip" }}
                         </p>
                         <p class="text-sm text-gray-600">
-                            {{ quote.currency }} {{ quote.amount }} • {{ quote.trip_request.pickup_location }} → {{ quote.trip_request.destination }}
+                            {{ quote.currency }} {{ quote.amount }} • {{ quote.trip_request.from_location|default:"N/A" }} → {{ quote.trip_request.to_location|default:"N/A" }}
                         </p>
                     </div>
                     <div class="text-right">

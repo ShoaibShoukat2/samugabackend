@@ -1,295 +1,211 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Samuga Travels</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .stat-card { transition: all 0.3s ease; }
-        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
-    </style>
-</head>
-<body class="bg-gradient-to-br from-gray-50 to-gray-100">
-    <div class="flex h-screen">
-        <!-- Enhanced Sidebar -->
-        <div class="w-72 bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 text-white shadow-2xl">
-            <div class="p-6 border-b border-gray-700">
-                <div class="flex items-center space-x-3">
-                    <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
-                        <i class="fas fa-ship text-white text-xl"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-xl font-bold">Admin Panel</h1>
-                        <p class="text-sm text-gray-400">Samuga Travels</p>
-                    </div>
-                </div>
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Welcome back! Here's your overview{% endblock %}
+
+{% block content %}
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="stat-card bg-white rounded-2xl shadow-lg p-6 border-l-4 border-blue-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-semibold text-gray-600 uppercase">Total Trips</p>
+                <p class="text-3xl font-bold text-gray-900 mt-2">{{ total_trips }}</p>
+                <p class="text-sm text-green-600 mt-1"><i class="fas fa-arrow-up mr-1"></i>12% increase</p>
             </div>
-            <nav class="p-4 space-y-2">
-                <a href="/api/admin-panel/dashboard/" class="flex items-center px-4 py-3 bg-gray-700 rounded-xl hover:bg-gray-600 transition-all">
-                    <i class="fas fa-tachometer-alt mr-3 text-blue-400"></i>
-                    <span class="font-medium">Dashboard</span>
-                </a>
-                <a href="/api/admin-panel/trip-requests/" class="flex items-center px-4 py-3 hover:bg-gray-700 rounded-xl transition-all">
-                    <i class="fas fa-map-marked-alt mr-3 text-green-400"></i>
-                    <span>Trip Requests</span>
-                </a>
-                <a href="/api/admin-panel/payments/" class="flex items-center px-4 py-3 hover:bg-gray-700 rounded-xl transition-all">
-                    <i class="fas fa-credit-card mr-3 text-yellow-400"></i>
-                    <span>Payments</span>
-                </a>
-                <a href="/api/admin-panel/bookings/" class="flex items-center px-4 py-3 hover:bg-gray-700 rounded-xl transition-all">
-                    <i class="fas fa-calendar-check mr-3 text-purple-400"></i>
-                    <span>Bookings</span>
-                </a>
-                <a href="/api/admin-panel/operators/" class="flex items-center px-4 py-3 hover:bg-gray-700 rounded-xl transition-all">
-                    <i class="fas fa-ship mr-3 text-indigo-400"></i>
-                    <span>Operators</span>
-                </a>
-                <a href="/api/admin-panel/subscriptions/" class="flex items-center px-4 py-3 hover:bg-gray-700 rounded-xl transition-all">
-                    <i class="fas fa-crown mr-3 text-pink-400"></i>
-                    <span>Subscriptions</span>
-                </a>
-                <a href="/api/admin-panel/users/" class="flex items-center px-4 py-3 hover:bg-gray-700 rounded-xl transition-all">
-                    <i class="fas fa-users mr-3 text-teal-400"></i>
-                    <span>Users</span>
-                </a>
-                <a href="/api/admin-panel/support/" class="flex items-center px-4 py-3 hover:bg-gray-700 rounded-xl transition-all">
-                    <i class="fas fa-headset mr-3 text-orange-400"></i>
-                    <span>Support</span>
-                </a>
-            </nav>
-        </div>
-
-        <!-- Main Content -->
-        <div class="flex-1 overflow-y-auto">
-            <!-- Header -->
-            <header class="bg-white shadow-lg p-6 border-b border-gray-200">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h2 class="text-3xl font-bold text-gray-900">Dashboard</h2>
-                        <p class="text-gray-600 mt-1">Welcome back! Here's your overview</p>
-                    </div>
-                    <div class="flex items-center space-x-4">
-                        <div class="text-right">
-                            <p class="text-sm text-gray-600">Admin</p>
-                            <p class="text-sm font-semibold text-gray-900">{{ request.user.email }}</p>
-                        </div>
-                        <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                            <i class="fas fa-user text-white"></i>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            <!-- Main Dashboard Content -->
-            <main class="p-6">
-                <!-- Stats Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <div class="stat-card bg-white rounded-2xl shadow-lg p-6 border-l-4 border-blue-500">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-semibold text-gray-600 uppercase">Total Trips</p>
-                                <p class="text-3xl font-bold text-gray-900 mt-2">{{ total_trips }}</p>
-                                <p class="text-sm text-green-600 mt-1"><i class="fas fa-arrow-up mr-1"></i>12% increase</p>
-                            </div>
-                            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center">
-                                <i class="fas fa-map-marked-alt text-white text-2xl"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="stat-card bg-white rounded-2xl shadow-lg p-6 border-l-4 border-yellow-500">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-semibold text-gray-600 uppercase">Pending Trips</p>
-                                <p class="text-3xl font-bold text-gray-900 mt-2">{{ pending_trips }}</p>
-                                <p class="text-sm text-yellow-600 mt-1"><i class="fas fa-clock mr-1"></i>Needs attention</p>
-                            </div>
-                            <div class="w-16 h-16 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-2xl flex items-center justify-center">
-                                <i class="fas fa-hourglass-half text-white text-2xl"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="stat-card bg-white rounded-2xl shadow-lg p-6 border-l-4 border-green-500">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-semibold text-gray-600 uppercase">Confirmed</p>
-                                <p class="text-3xl font-bold text-gray-900 mt-2">{{ confirmed_bookings }}</p>
-                                <p class="text-sm text-green-600 mt-1"><i class="fas fa-check-circle mr-1"></i>All set</p>
-                            </div>
-                            <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center">
-                                <i class="fas fa-calendar-check text-white text-2xl"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="stat-card bg-white rounded-2xl shadow-lg p-6 border-l-4 border-purple-500">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-semibold text-gray-600 uppercase">Total Users</p>
-                                <p class="text-3xl font-bold text-gray-900 mt-2">{{ total_users }}</p>
-                                <p class="text-sm text-purple-600 mt-1"><i class="fas fa-users mr-1"></i>Active</p>
-                            </div>
-                            <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center">
-                                <i class="fas fa-users text-white text-2xl"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Marketplace Stats -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <div class="stat-card bg-gradient-to-br from-indigo-50 to-blue-50 rounded-2xl shadow-lg p-6 border border-indigo-200">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-semibold text-indigo-700 uppercase">Operators</p>
-                                <p class="text-3xl font-bold text-indigo-900 mt-2">{{ total_operators }}</p>
-                            </div>
-                            <div class="w-14 h-14 bg-indigo-500 rounded-xl flex items-center justify-center">
-                                <i class="fas fa-ship text-white text-xl"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="stat-card bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl shadow-lg p-6 border border-green-200">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-semibold text-green-700 uppercase">Verified</p>
-                                <p class="text-3xl font-bold text-green-900 mt-2">{{ verified_operators }}</p>
-                            </div>
-                            <div class="w-14 h-14 bg-green-500 rounded-xl flex items-center justify-center">
-                                <i class="fas fa-shield-alt text-white text-xl"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="stat-card bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl shadow-lg p-6 border border-orange-200">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-semibold text-orange-700 uppercase">Pending</p>
-                                <p class="text-3xl font-bold text-orange-900 mt-2">{{ pending_operators }}</p>
-                            </div>
-                            <div class="w-14 h-14 bg-orange-500 rounded-xl flex items-center justify-center">
-                                <i class="fas fa-hourglass-half text-white text-xl"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="stat-card bg-gradient-to-br from-pink-50 to-purple-50 rounded-2xl shadow-lg p-6 border border-pink-200">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-semibold text-pink-700 uppercase">Subscriptions</p>
-                                <p class="text-3xl font-bold text-pink-900 mt-2">{{ active_subscriptions }}</p>
-                            </div>
-                            <div class="w-14 h-14 bg-pink-500 rounded-xl flex items-center justify-center">
-                                <i class="fas fa-crown text-white text-xl"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Revenue Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <div class="bg-gradient-to-r from-emerald-500 to-green-600 rounded-2xl shadow-xl p-8 text-white">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-emerald-100 text-sm font-medium uppercase">Subscription Revenue</p>
-                                <p class="text-4xl font-bold mt-3">MVR {{ monthly_subscription_revenue }}</p>
-                                <p class="text-emerald-200 text-sm mt-2">Monthly earnings from subscriptions</p>
-                            </div>
-                            <i class="fas fa-dollar-sign text-6xl text-emerald-200 opacity-50"></i>
-                        </div>
-                    </div>
-
-                    <div class="bg-gradient-to-r from-teal-500 to-cyan-600 rounded-2xl shadow-xl p-8 text-white">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-teal-100 text-sm font-medium uppercase">Commission Revenue</p>
-                                <p class="text-4xl font-bold mt-3">MVR {{ monthly_commission_revenue }}</p>
-                                <p class="text-teal-200 text-sm mt-2">Monthly earnings from commissions</p>
-                            </div>
-                            <i class="fas fa-percentage text-6xl text-teal-200 opacity-50"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Activity -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Recent Trips -->
-                    <div class="bg-white rounded-2xl shadow-lg">
-                        <div class="px-6 py-4 border-b border-gray-200">
-                            <div class="flex items-center justify-between">
-                                <h3 class="text-xl font-bold text-gray-900">Recent Trip Requests</h3>
-                                <a href="/api/admin-panel/trip-requests/" class="text-blue-600 hover:text-blue-700 text-sm font-medium">View All →</a>
-                            </div>
-                        </div>
-                        <div class="p-6">
-                            {% if recent_trips %}
-                                <div class="space-y-4">
-                                    {% for trip in recent_trips %}
-                                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                                            <div class="flex items-center space-x-4">
-                                                <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                                                    <span class="text-white font-bold">{{ trip.user.first_name|first }}{{ trip.user.last_name|first }}</span>
-                                                </div>
-                                                <div>
-                                                    <p class="font-semibold text-gray-900">{{ trip.user.first_name }} {{ trip.user.last_name }}</p>
-                                                    <p class="text-sm text-gray-600">{{ trip.trip_type|title }}</p>
-                                                </div>
-                                            </div>
-                                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">{{ trip.status|title }}</span>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                <div class="text-center py-12">
-                                    <i class="fas fa-map-marked-alt text-gray-300 text-5xl mb-4"></i>
-                                    <p class="text-gray-500">No recent trips</p>
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <!-- Pending Payments -->
-                    <div class="bg-white rounded-2xl shadow-lg">
-                        <div class="px-6 py-4 border-b border-gray-200">
-                            <div class="flex items-center justify-between">
-                                <h3 class="text-xl font-bold text-gray-900">Pending Payments</h3>
-                                <a href="/api/admin-panel/payments/" class="text-blue-600 hover:text-blue-700 text-sm font-medium">View All →</a>
-                            </div>
-                        </div>
-                        <div class="p-6">
-                            {% if pending_payment_list %}
-                                <div class="space-y-4">
-                                    {% for payment in pending_payment_list %}
-                                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                                            <div class="flex items-center space-x-4">
-                                                <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
-                                                    <i class="fas fa-dollar-sign text-white"></i>
-                                                </div>
-                                                <div>
-                                                    <p class="font-semibold text-gray-900">{{ payment.trip_request.user.first_name }}</p>
-                                                    <p class="text-sm text-gray-600">{{ payment.currency }} {{ payment.amount }}</p>
-                                                </div>
-                                            </div>
-                                            <a href="/api/admin-panel/verify-payment/{{ payment.id }}/" class="px-4 py-2 bg-blue-500 text-white text-sm rounded-xl hover:bg-blue-600 transition-colors font-medium">Verify</a>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                <div class="text-center py-12">
-                                    <i class="fas fa-credit-card text-gray-300 text-5xl mb-4"></i>
-                                    <p class="text-gray-500">No pending payments</p>
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </main>
+            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center">
+                <i class="fas fa-map-marked-alt text-white text-2xl"></i>
+            </div>
         </div>
     </div>
-</body>
-</html>
+
+    <div class="stat-card bg-white rounded-2xl shadow-lg p-6 border-l-4 border-yellow-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-semibold text-gray-600 uppercase">Pending Trips</p>
+                <p class="text-3xl font-bold text-gray-900 mt-2">{{ pending_trips }}</p>
+                <p class="text-sm text-yellow-600 mt-1"><i class="fas fa-clock mr-1"></i>Needs attention</p>
+            </div>
+            <div class="w-16 h-16 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-2xl flex items-center justify-center">
+                <i class="fas fa-hourglass-half text-white text-2xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="stat-card bg-white rounded-2xl shadow-lg p-6 border-l-4 border-green-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-semibold text-gray-600 uppercase">Confirmed</p>
+                <p class="text-3xl font-bold text-gray-900 mt-2">{{ confirmed_bookings }}</p>
+                <p class="text-sm text-green-600 mt-1"><i class="fas fa-check-circle mr-1"></i>All set</p>
+            </div>
+            <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center">
+                <i class="fas fa-calendar-check text-white text-2xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="stat-card bg-white rounded-2xl shadow-lg p-6 border-l-4 border-purple-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-semibold text-gray-600 uppercase">Total Users</p>
+                <p class="text-3xl font-bold text-gray-900 mt-2">{{ total_users }}</p>
+                <p class="text-sm text-purple-600 mt-1"><i class="fas fa-users mr-1"></i>Active</p>
+            </div>
+            <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center">
+                <i class="fas fa-users text-white text-2xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Marketplace Stats -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="stat-card bg-gradient-to-br from-indigo-50 to-blue-50 rounded-2xl shadow-lg p-6 border border-indigo-200">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-semibold text-indigo-700 uppercase">Operators</p>
+                <p class="text-3xl font-bold text-indigo-900 mt-2">{{ total_operators }}</p>
+            </div>
+            <div class="w-14 h-14 bg-indigo-500 rounded-xl flex items-center justify-center">
+                <i class="fas fa-ship text-white text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="stat-card bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl shadow-lg p-6 border border-green-200">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-semibold text-green-700 uppercase">Verified</p>
+                <p class="text-3xl font-bold text-green-900 mt-2">{{ verified_operators }}</p>
+            </div>
+            <div class="w-14 h-14 bg-green-500 rounded-xl flex items-center justify-center">
+                <i class="fas fa-shield-alt text-white text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="stat-card bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl shadow-lg p-6 border border-orange-200">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-semibold text-orange-700 uppercase">Pending</p>
+                <p class="text-3xl font-bold text-orange-900 mt-2">{{ pending_operators }}</p>
+            </div>
+            <div class="w-14 h-14 bg-orange-500 rounded-xl flex items-center justify-center">
+                <i class="fas fa-hourglass-half text-white text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="stat-card bg-gradient-to-br from-pink-50 to-purple-50 rounded-2xl shadow-lg p-6 border border-pink-200">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-semibold text-pink-700 uppercase">Subscriptions</p>
+                <p class="text-3xl font-bold text-pink-900 mt-2">{{ active_subscriptions }}</p>
+            </div>
+            <div class="w-14 h-14 bg-pink-500 rounded-xl flex items-center justify-center">
+                <i class="fas fa-crown text-white text-xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Revenue Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <div class="bg-gradient-to-r from-emerald-500 to-green-600 rounded-2xl shadow-xl p-8 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-emerald-100 text-sm font-medium uppercase">Subscription Revenue</p>
+                <p class="text-4xl font-bold mt-3">MVR {{ monthly_subscription_revenue }}</p>
+                <p class="text-emerald-200 text-sm mt-2">Monthly earnings from subscriptions</p>
+            </div>
+            <i class="fas fa-dollar-sign text-6xl text-emerald-200 opacity-50"></i>
+        </div>
+    </div>
+
+    <div class="bg-gradient-to-r from-teal-500 to-cyan-600 rounded-2xl shadow-xl p-8 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-teal-100 text-sm font-medium uppercase">Commission Revenue</p>
+                <p class="text-4xl font-bold mt-3">MVR {{ monthly_commission_revenue }}</p>
+                <p class="text-teal-200 text-sm mt-2">Monthly earnings from commissions</p>
+            </div>
+            <i class="fas fa-percentage text-6xl text-teal-200 opacity-50"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Recent Trips -->
+    <div class="bg-white rounded-2xl shadow-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h3 class="text-xl font-bold text-gray-900">Recent Trip Requests</h3>
+                <a href="/api/admin-panel/trip-requests/" class="text-blue-600 hover:text-blue-700 text-sm font-medium">View All →</a>
+            </div>
+        </div>
+        <div class="p-6">
+            {% if recent_trips %}
+                <div class="space-y-4">
+                    {% for trip in recent_trips %}
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                    <span class="text-white font-bold">{{ trip.user.first_name|first }}{{ trip.user.last_name|first }}</span>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-gray-900">{{ trip.user.first_name }} {{ trip.user.last_name }}</p>
+                                    <p class="text-sm text-gray-600">{{ trip.trip_type|title }}</p>
+                                </div>
+                            </div>
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">{{ trip.status|title }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <i class="fas fa-map-marked-alt text-gray-300 text-5xl mb-4"></i>
+                    <p class="text-gray-500">No recent trips</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Pending Payments -->
+    <div class="bg-white rounded-2xl shadow-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h3 class="text-xl font-bold text-gray-900">Pending Payments</h3>
+                <a href="/api/admin-panel/payments/" class="text-blue-600 hover:text-blue-700 text-sm font-medium">View All →</a>
+            </div>
+        </div>
+        <div class="p-6">
+            {% if pending_payment_list %}
+                <div class="space-y-4">
+                    {% for payment in pending_payment_list %}
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-dollar-sign text-white"></i>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-gray-900">{{ payment.trip_request.user.first_name }}</p>
+                                    <p class="text-sm text-gray-600">{{ payment.currency }} {{ payment.amount }}</p>
+                                </div>
+                            </div>
+                            <a href="/api/admin-panel/verify-payment/{{ payment.id }}/" class="px-4 py-2 bg-blue-500 text-white text-sm rounded-xl hover:bg-blue-600 transition-colors font-medium">Verify</a>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <i class="fas fa-credit-card text-gray-300 text-5xl mb-4"></i>
+                    <p class="text-gray-500">No pending payments</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
