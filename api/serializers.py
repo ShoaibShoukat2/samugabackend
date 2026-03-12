@@ -70,10 +70,40 @@ class OTPVerifySerializer(serializers.Serializer):
     otp = serializers.CharField()
 
 class QuoteSerializer(serializers.ModelSerializer):
+    operator_details = serializers.SerializerMethodField()
+    boat_details = serializers.SerializerMethodField()
+    
     class Meta:
         model = Quote
         fields = '__all__'
-        read_only_fields = ['created_at']
+        read_only_fields = ['created_at', 'commission_amount']
+    
+    def get_operator_details(self, obj):
+        if obj.operator:
+            # Import here to avoid circular imports
+            return {
+                'id': str(obj.operator.id),
+                'company_name': obj.operator.company_name,
+                'phone_number': obj.operator.phone_number,
+                'average_rating': float(obj.operator.average_rating),
+                'total_ratings': obj.operator.total_ratings,
+            }
+        return None
+    
+    def get_boat_details(self, obj):
+        if obj.boat:
+            return {
+                'id': str(obj.boat.id),
+                'name': obj.boat.name,
+                'boat_type': obj.boat.boat_type,
+                'capacity': obj.boat.capacity,
+                'has_toilet': obj.boat.has_toilet,
+                'has_shade': obj.boat.has_shade,
+                'has_snorkel_gear': obj.boat.has_snorkel_gear,
+                'has_fishing_gear': obj.boat.has_fishing_gear,
+                'has_life_jackets': obj.boat.has_life_jackets,
+            }
+        return None
 
 class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -88,7 +118,8 @@ class BookingSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'booking_code', 'created_at']
 
 class TripRequestSerializer(serializers.ModelSerializer):
-    quote = QuoteSerializer(read_only=True)
+    quote = QuoteSerializer(read_only=True)  # Legacy single quote
+    quotes = QuoteSerializer(many=True, read_only=True)  # Multiple quotes for marketplace
     payment = PaymentSerializer(read_only=True)
     booking = BookingSerializer(read_only=True)
     user_details = UserSerializer(source='user', read_only=True)
@@ -111,3 +142,104 @@ class NotificationSerializer(serializers.ModelSerializer):
         model = Notification
         fields = '__all__'
         read_only_fields = ['id', 'created_at']
+# Marketplace Serializers
+from .models import SpeedboatOperator, Speedboat, OperatorSubscription, OperatorRating
+
+class SpeedboatOperatorSerializer(serializers.ModelSerializer):
+    user_details = UserSerializer(source='user', read_only=True)
+    boats_count = serializers.SerializerMethodField()
+    license_document_url = serializers.SerializerMethodField()
+    boat_registration_url = serializers.SerializerMethodField()
+    insurance_document_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = SpeedboatOperator
+        fields = '__all__'
+        read_only_fields = ['id', 'user', 'verification_status', 'subscription_status', 
+                           'subscription_expires_at', 'average_rating', 'total_ratings', 
+                           'created_at', 'updated_at']
+    
+    def get_boats_count(self, obj):
+        return obj.boats.count()
+    
+    def get_license_document_url(self, obj):
+        if obj.license_document:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.license_document.url)
+        return None
+    
+    def get_boat_registration_url(self, obj):
+        if obj.boat_registration:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.boat_registration.url)
+        return None
+    
+    def get_insurance_document_url(self, obj):
+        if obj.insurance_document:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.insurance_document.url)
+        return None
+
+class SpeedboatSerializer(serializers.ModelSerializer):
+    operator_details = SpeedboatOperatorSerializer(source='operator', read_only=True)
+    main_image_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Speedboat
+        fields = '__all__'
+        read_only_fields = ['id', 'operator', 'created_at']
+    
+    def get_main_image_url(self, obj):
+        if obj.main_image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.main_image.url)
+        return None
+
+class OperatorSubscriptionSerializer(serializers.ModelSerializer):
+    operator_details = SpeedboatOperatorSerializer(source='operator', read_only=True)
+    payment_proof_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = OperatorSubscription
+        fields = '__all__'
+        read_only_fields = ['id', 'operator', 'created_at', 'paid_at']
+    
+    def get_payment_proof_url(self, obj):
+        if obj.payment_proof:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.payment_proof.url)
+        return None
+
+class OperatorRatingSerializer(serializers.ModelSerializer):
+    customer_details = UserSerializer(source='customer', read_only=True)
+    operator_details = SpeedboatOperatorSerializer(source='operator', read_only=True)
+    booking_details = BookingSerializer(source='booking', read_only=True)
+    
+    class Meta:
+        model = OperatorRating
+        fields = '__all__'
+        read_only_fields = ['id', 'customer', 'operator', 'created_at']
+
+# Enhanced Quote Serializer for Marketplace
+class MarketplaceQuoteSerializer(serializers.ModelSerializer):
+    operator_details = SpeedboatOperatorSerializer(source='operator', read_only=True)
+    boat_details = SpeedboatSerializer(source='boat', read_only=True)
+    trip_request_details = TripRequestSerializer(source='trip_request', read_only=True)
+    
+    class Meta:
+        model = Quote
+        fields = '__all__'
+        read_only_fields = ['id', 'created_at', 'commission_amount']
+    
+    def create(self, validated_data):
+        # Calculate commission when creating quote
+        quote = super().create(validated_data)
+        if quote.amount and quote.commission_rate:
+            quote.commission_amount = (quote.amount * quote.commission_rate) / 100
+            quote.save()
+        return quote

@@ -45,6 +45,9 @@
                 <i class="fas fa-chart-line w-6"></i>
                 <span class="ml-3">Dashboard</span>
             </a>
+            
+            <!-- Trip Management -->
+            <div class="px-6 py-2 text-blue-200 text-xs uppercase tracking-wider font-semibold">Trip Management</div>
             <a href="{% url 'admin_trip_requests' %}" class="flex items-center px-6 py-3 hover:bg-blue-700 transition {% if 'trip' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
                 <i class="fas fa-suitcase w-6"></i>
                 <span class="ml-3">Trip Requests</span>
@@ -57,13 +60,39 @@
                 <i class="fas fa-ticket-alt w-6"></i>
                 <span class="ml-3">Bookings</span>
             </a>
+            
+            <!-- Marketplace Management -->
+            <div class="px-6 py-2 text-blue-200 text-xs uppercase tracking-wider font-semibold mt-4">Marketplace</div>
+            <a href="{% url 'admin_operators' %}" class="flex items-center px-6 py-3 hover:bg-blue-700 transition {% if 'operator' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
+                <i class="fas fa-ship w-6"></i>
+                <span class="ml-3">Operators</span>
+            </a>
+            <a href="{% url 'admin_subscriptions' %}" class="flex items-center px-6 py-3 hover:bg-blue-700 transition {% if 'subscription' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
+                <i class="fas fa-calendar-check w-6"></i>
+                <span class="ml-3">Subscriptions</span>
+            </a>
+            <a href="{% url 'admin_marketplace_quotes' %}" class="flex items-center px-6 py-3 hover:bg-blue-700 transition {% if 'marketplace_quotes' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
+                <i class="fas fa-tags w-6"></i>
+                <span class="ml-3">Marketplace Quotes</span>
+            </a>
+            <a href="{% url 'admin_revenue_dashboard' %}" class="flex items-center px-6 py-3 hover:bg-blue-700 transition {% if 'revenue' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
+                <i class="fas fa-dollar-sign w-6"></i>
+                <span class="ml-3">Revenue</span>
+            </a>
+            
+            <!-- System Management -->
+            <div class="px-6 py-2 text-blue-200 text-xs uppercase tracking-wider font-semibold mt-4">System</div>
+            <a href="{% url 'admin_users' %}" class="flex items-center px-6 py-3 hover:bg-blue-700 transition {% if 'user' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
+                <i class="fas fa-users w-6"></i>
+                <span class="ml-3">Users</span>
+            </a>
             <a href="{% url 'admin_support' %}" class="flex items-center px-6 py-3 hover:bg-blue-700 transition {% if 'support' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
                 <i class="fas fa-headset w-6"></i>
                 <span class="ml-3">Support</span>
             </a>
-            <a href="{% url 'admin_users' %}" class="flex items-center px-6 py-3 hover:bg-blue-700 transition {% if 'user' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
-                <i class="fas fa-users w-6"></i>
-                <span class="ml-3">Users</span>
+            <a href="{% url 'admin_platform_settings' %}" class="flex items-center px-6 py-3 hover:bg-blue-700 transition {% if 'settings' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
+                <i class="fas fa-cog w-6"></i>
+                <span class="ml-3">Settings</span>
             </a>
         </nav>
         

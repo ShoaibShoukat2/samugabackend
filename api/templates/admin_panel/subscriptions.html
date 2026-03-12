@@ -1,0 +1,171 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Subscriptions{% endblock %}
+{% block page_title %}Operator Subscriptions{% endblock %}
+{% block page_subtitle %}Manage monthly subscription payments (450 MVR/month){% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div class="flex flex-wrap gap-2">
+            <a href="?status=all" class="px-4 py-2 rounded-lg text-sm font-semibold transition {% if status_filter == 'all' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                All ({{ subscriptions.count }})
+            </a>
+            <a href="?status=pending" class="px-4 py-2 rounded-lg text-sm font-semibold transition {% if status_filter == 'pending' %}bg-yellow-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                Pending
+            </a>
+            <a href="?status=paid" class="px-4 py-2 rounded-lg text-sm font-semibold transition {% if status_filter == 'paid' %}bg-green-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                Paid
+            </a>
+            <a href="?status=overdue" class="px-4 py-2 rounded-lg text-sm font-semibold transition {% if status_filter == 'overdue' %}bg-red-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                Overdue
+            </a>
+        </div>
+        
+        <div class="bg-blue-50 px-4 py-2 rounded-lg">
+            <span class="text-blue-800 font-semibold text-sm">Monthly Rate: 450 MVR</span>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white rounded-xl shadow-lg overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Operator</th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Plan</th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Period</th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Amount</th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for subscription in subscriptions %}
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="fas fa-ship text-blue-600"></i>
+                            </div>
+                            <div>
+                                <div class="font-semibold text-gray-900">{{ subscription.operator.company_name }}</div>
+                                <div class="text-sm text-gray-500">{{ subscription.operator.contact_person }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
+                            {{ subscription.plan|title }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-gray-900">{{ subscription.start_date|date:"M d, Y" }}</div>
+                        <div class="text-sm text-gray-500">to {{ subscription.end_date|date:"M d, Y" }}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-lg font-bold text-gray-900">MVR {{ subscription.amount }}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold
+                            {% if subscription.payment_status == 'paid' %}bg-green-100 text-green-800
+                            {% elif subscription.payment_status == 'pending' %}bg-yellow-100 text-yellow-800
+                            {% elif subscription.payment_status == 'overdue' %}bg-red-100 text-red-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ subscription.payment_status|title }}
+                        </span>
+                        {% if subscription.paid_at %}
+                        <div class="text-xs text-gray-500 mt-1">Paid: {{ subscription.paid_at|date:"M d, Y" }}</div>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex space-x-2">
+                            {% if subscription.payment_status == 'pending' %}
+                            <a href="{% url 'admin_verify_subscription' subscription.id %}" 
+                               class="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm font-semibold hover:bg-green-200 transition">
+                                <i class="fas fa-check mr-1"></i>Verify
+                            </a>
+                            {% endif %}
+                            {% if subscription.payment_proof %}
+                            <a href="{{ subscription.payment_proof.url }}" target="_blank"
+                               class="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold hover:bg-blue-200 transition">
+                                <i class="fas fa-receipt mr-1"></i>Proof
+                            </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-6 py-12 text-center">
+                        <div class="text-gray-400">
+                            <i class="fas fa-calendar-check text-4xl mb-4"></i>
+                            <p class="text-lg font-semibold">No subscriptions found</p>
+                            <p class="text-sm">Operator subscriptions will appear here</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Subscription Statistics -->
+<div class="mt-8 grid grid-cols-1 md:grid-cols-4 gap-6">
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="flex items-center">
+            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600">Active Subscriptions</p>
+                <p class="text-2xl font-bold text-gray-900">
+                    {{ subscriptions|length }}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="flex items-center">
+            <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mr-4">
+                <i class="fas fa-hourglass-half text-yellow-600 text-xl"></i>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600">Pending Payments</p>
+                <p class="text-2xl font-bold text-gray-900">
+                    {% with pending_count=subscriptions|length %}{{ pending_count }}{% endwith %}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="flex items-center">
+            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                <i class="fas fa-dollar-sign text-blue-600 text-xl"></i>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600">Monthly Revenue</p>
+                <p class="text-2xl font-bold text-gray-900">
+                    {% with total_revenue=subscriptions|length %}MVR {{ total_revenue|floatformat:0 }}{% endwith %}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="flex items-center">
+            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                <i class="fas fa-chart-line text-purple-600 text-xl"></i>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600">Collection Rate</p>
+                <p class="text-2xl font-bold text-gray-900">95%</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -137,8 +137,87 @@
     </div>
 </div>
 
+<!-- Marketplace Stats -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+    <!-- Total Operators -->
+    <div class="stat-card bg-white rounded-2xl shadow-xl overflow-hidden relative group">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-400 to-indigo-500 opacity-10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+        <div class="p-4 sm:p-6 relative z-10">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <i class="fas fa-ship text-white text-xl sm:text-2xl"></i>
+                </div>
+                <span class="text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">Marketplace</span>
+            </div>
+            <p class="text-gray-500 text-xs sm:text-sm font-medium uppercase tracking-wide">Total Operators</p>
+            <p class="text-3xl sm:text-4xl font-bold text-gray-800 mt-2">{{ total_operators }}</p>
+            <div class="mt-3 flex items-center text-xs text-indigo-600">
+                <i class="fas fa-anchor mr-1"></i>
+                <span>Registered operators</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verified Operators -->
+    <div class="stat-card bg-white rounded-2xl shadow-xl overflow-hidden relative group">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-400 to-emerald-500 opacity-10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+        <div class="p-4 sm:p-6 relative z-10">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <i class="fas fa-shield-check text-white text-xl sm:text-2xl"></i>
+                </div>
+                <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">Verified</span>
+            </div>
+            <p class="text-gray-500 text-xs sm:text-sm font-medium uppercase tracking-wide">Verified Operators</p>
+            <p class="text-3xl sm:text-4xl font-bold text-gray-800 mt-2">{{ verified_operators }}</p>
+            <div class="mt-3 flex items-center text-xs text-emerald-600">
+                <i class="fas fa-check-circle mr-1"></i>
+                <span>Active & verified</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Operators -->
+    <div class="stat-card bg-white rounded-2xl shadow-xl overflow-hidden relative group">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-400 to-amber-500 opacity-10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+        <div class="p-4 sm:p-6 relative z-10">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <i class="fas fa-hourglass-half text-white text-xl sm:text-2xl pulse-icon"></i>
+                </div>
+                <span class="text-xs font-semibold text-amber-600 bg-amber-50 px-3 py-1 rounded-full">Review</span>
+            </div>
+            <p class="text-gray-500 text-xs sm:text-sm font-medium uppercase tracking-wide">Pending Operators</p>
+            <p class="text-3xl sm:text-4xl font-bold text-gray-800 mt-2">{{ pending_operators }}</p>
+            <div class="mt-3 flex items-center text-xs text-amber-600">
+                <i class="fas fa-clock mr-1"></i>
+                <span>Awaiting verification</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Revenue -->
+    <div class="stat-card bg-white rounded-2xl shadow-xl overflow-hidden relative group">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-rose-400 to-rose-500 opacity-10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+        <div class="p-4 sm:p-6 relative z-10">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-rose-500 to-rose-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <i class="fas fa-chart-line text-white text-xl sm:text-2xl"></i>
+                </div>
+                <span class="text-xs font-semibold text-rose-600 bg-rose-50 px-3 py-1 rounded-full">Revenue</span>
+            </div>
+            <p class="text-gray-500 text-xs sm:text-sm font-medium uppercase tracking-wide">Monthly Revenue</p>
+            <p class="text-3xl sm:text-4xl font-bold text-gray-800 mt-2">MVR {{ monthly_subscription_revenue|add:monthly_commission_revenue|floatformat:0 }}</p>
+            <div class="mt-3 flex items-center text-xs text-rose-600">
+                <i class="fas fa-dollar-sign mr-1"></i>
+                <span>Subscriptions + Commissions</span>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Quick Actions -->
-<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+<div class="grid grid-cols-2 sm:grid-cols-6 gap-3 sm:gap-4 mb-6 sm:mb-8">
     <a href="{% url 'admin_trip_requests' %}" class="bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl p-4 sm:p-5 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
         <i class="fas fa-plus-circle text-2xl sm:text-3xl mb-2"></i>
         <p class="text-xs sm:text-sm font-semibold">New Trip Request</p>
@@ -150,6 +229,14 @@
     <a href="{% url 'admin_bookings' %}" class="bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl p-4 sm:p-5 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
         <i class="fas fa-ticket-alt text-2xl sm:text-3xl mb-2"></i>
         <p class="text-xs sm:text-sm font-semibold">View Bookings</p>
+    </a>
+    <a href="{% url 'admin_operators' %}" class="bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-xl p-4 sm:p-5 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+        <i class="fas fa-ship text-2xl sm:text-3xl mb-2"></i>
+        <p class="text-xs sm:text-sm font-semibold">Manage Operators</p>
+    </a>
+    <a href="{% url 'admin_revenue_dashboard' %}" class="bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl p-4 sm:p-5 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+        <i class="fas fa-chart-line text-2xl sm:text-3xl mb-2"></i>
+        <p class="text-xs sm:text-sm font-semibold">Revenue Dashboard</p>
     </a>
     <a href="{% url 'admin_support' %}" class="bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl p-4 sm:p-5 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
         <i class="fas fa-headset text-2xl sm:text-3xl mb-2"></i>

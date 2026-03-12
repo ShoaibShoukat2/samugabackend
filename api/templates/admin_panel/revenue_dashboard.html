@@ -1,0 +1,281 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Revenue Dashboard{% endblock %}
+{% block page_title %}Revenue Dashboard{% endblock %}
+{% block page_subtitle %}Platform revenue analytics and insights{% endblock %}
+
+{% block content %}
+<!-- Revenue Overview Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-blue-100 text-sm font-medium">Subscription Revenue</p>
+                <p class="text-3xl font-bold">MVR {{ subscription_revenue|floatformat:0 }}</p>
+                <p class="text-blue-100 text-xs mt-1">This month</p>
+            </div>
+            <div class="w-12 h-12 bg-blue-400 rounded-lg flex items-center justify-center">
+                <i class="fas fa-calendar-check text-xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-green-100 text-sm font-medium">Commission Revenue</p>
+                <p class="text-3xl font-bold">MVR {{ commission_revenue|floatformat:0 }}</p>
+                <p class="text-green-100 text-xs mt-1">This month</p>
+            </div>
+            <div class="w-12 h-12 bg-green-400 rounded-lg flex items-center justify-center">
+                <i class="fas fa-percentage text-xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-purple-100 text-sm font-medium">Total Monthly Revenue</p>
+                <p class="text-3xl font-bold">MVR {{ total_monthly_revenue|floatformat:0 }}</p>
+                <p class="text-purple-100 text-xs mt-1">Combined income</p>
+            </div>
+            <div class="w-12 h-12 bg-purple-400 rounded-lg flex items-center justify-center">
+                <i class="fas fa-chart-line text-xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-orange-100 text-sm font-medium">Projected Monthly</p>
+                <p class="text-3xl font-bold">MVR {{ projected_subscription|floatformat:0 }}</p>
+                <p class="text-orange-100 text-xs mt-1">From subscriptions</p>
+            </div>
+            <div class="w-12 h-12 bg-orange-400 rounded-lg flex items-center justify-center">
+                <i class="fas fa-calculator text-xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Operator Statistics -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <h3 class="text-xl font-bold text-gray-800 mb-6">Operator Subscription Status</h3>
+        <div class="space-y-4">
+            <div class="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                        <i class="fas fa-check text-green-600"></i>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-gray-900">Active Subscriptions</p>
+                        <p class="text-sm text-gray-600">Operators with valid subscriptions</p>
+                    </div>
+                </div>
+                <span class="text-2xl font-bold text-green-600">{{ active_operators }}</span>
+            </div>
+            
+            <div class="flex items-center justify-between p-4 bg-red-50 rounded-lg">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                        <i class="fas fa-times text-red-600"></i>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-gray-900">Expired Subscriptions</p>
+                        <p class="text-sm text-gray-600">Operators with expired subscriptions</p>
+                    </div>
+                </div>
+                <span class="text-2xl font-bold text-red-600">{{ expired_operators }}</span>
+            </div>
+            
+            <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-700 font-medium">Monthly Subscription Rate</span>
+                    <span class="text-xl font-bold text-blue-600">MVR 450</span>
+                </div>
+                <div class="flex items-center justify-between mt-2">
+                    <span class="text-gray-700 font-medium">Potential Monthly Revenue</span>
+                    <span class="text-lg font-semibold text-gray-900">MVR {{ projected_subscription }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <h3 class="text-xl font-bold text-gray-800 mb-6">Revenue Breakdown</h3>
+        <div class="space-y-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="w-4 h-4 bg-blue-500 rounded mr-3"></div>
+                    <span class="text-gray-700">Subscription Revenue</span>
+                </div>
+                <span class="font-semibold text-gray-900">
+                    {% widthratio subscription_revenue total_monthly_revenue 100 %}%
+                </span>
+            </div>
+            
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="w-4 h-4 bg-green-500 rounded mr-3"></div>
+                    <span class="text-gray-700">Commission Revenue</span>
+                </div>
+                <span class="font-semibold text-gray-900">
+                    {% widthratio commission_revenue total_monthly_revenue 100 %}%
+                </span>
+            </div>
+            
+            <!-- Simple Progress Bars -->
+            <div class="mt-6 space-y-3">
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-gray-600">Subscriptions</span>
+                        <span class="text-gray-900">MVR {{ subscription_revenue|floatformat:0 }}</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-blue-500 h-2 rounded-full" style="width: {% widthratio subscription_revenue total_monthly_revenue 100 %}%"></div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-gray-600">Commissions</span>
+                        <span class="text-gray-900">MVR {{ commission_revenue|floatformat:0 }}</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-green-500 h-2 rounded-full" style="width: {% widthratio commission_revenue total_monthly_revenue 100 %}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Recent Revenue Transactions -->
+<div class="bg-white rounded-xl shadow-lg p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-bold text-gray-800">Recent Revenue Transactions</h3>
+        <div class="flex space-x-2">
+            <button class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold hover:bg-blue-200 transition">
+                Export Data
+            </button>
+        </div>
+    </div>
+    
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Source</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Amount</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Description</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for revenue in recent_revenues %}
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-4 text-sm text-gray-900">
+                        {{ revenue.created_at|date:"M d, Y" }}
+                        <div class="text-xs text-gray-500">{{ revenue.created_at|time:"H:i" }}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold
+                            {% if revenue.revenue_type == 'subscription' %}bg-blue-100 text-blue-800
+                            {% else %}bg-green-100 text-green-800{% endif %}">
+                            {{ revenue.revenue_type|title }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-900">
+                        {% if revenue.subscription %}
+                            {{ revenue.subscription.operator.company_name }}
+                        {% elif revenue.booking %}
+                            {{ revenue.booking.trip_request.user.email|truncatechars:25 }}
+                        {% else %}
+                            System
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-lg font-bold text-gray-900">
+                            {{ revenue.currency }} {{ revenue.amount }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-600">
+                        {{ revenue.description|truncatechars:50 }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-12 text-center">
+                        <div class="text-gray-400">
+                            <i class="fas fa-chart-line text-4xl mb-4"></i>
+                            <p class="text-lg font-semibold">No revenue transactions yet</p>
+                            <p class="text-sm">Revenue data will appear here as operators pay subscriptions and bookings are completed</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Revenue Insights -->
+<div class="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <h4 class="text-lg font-bold text-gray-800 mb-4">Growth Metrics</h4>
+        <div class="space-y-3">
+            <div class="flex justify-between items-center">
+                <span class="text-gray-600">Monthly Growth</span>
+                <span class="text-green-600 font-semibold">+15%</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-gray-600">New Operators</span>
+                <span class="text-blue-600 font-semibold">{{ active_operators }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-gray-600">Retention Rate</span>
+                <span class="text-green-600 font-semibold">92%</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <h4 class="text-lg font-bold text-gray-800 mb-4">Commission Insights</h4>
+        <div class="space-y-3">
+            <div class="flex justify-between items-center">
+                <span class="text-gray-600">Average Commission</span>
+                <span class="text-gray-900 font-semibold">5%</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-gray-600">Total Bookings</span>
+                <span class="text-blue-600 font-semibold">{{ recent_revenues|length }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-gray-600">Avg. Booking Value</span>
+                <span class="text-green-600 font-semibold">$180</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <h4 class="text-lg font-bold text-gray-800 mb-4">Projections</h4>
+        <div class="space-y-3">
+            <div class="flex justify-between items-center">
+                <span class="text-gray-600">Next Month</span>
+                <span class="text-blue-600 font-semibold">MVR {{ projected_subscription|add:5000 }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-gray-600">Quarterly Target</span>
+                <span class="text-purple-600 font-semibold">MVR 75,000</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-gray-600">Annual Goal</span>
+                <span class="text-green-600 font-semibold">MVR 300,000</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

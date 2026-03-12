@@ -1,0 +1,221 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Verify {{ operator.company_name }}{% endblock %}
+{% block page_title %}Verify Operator{% endblock %}
+{% block page_subtitle %}{{ operator.company_name }} - Review and approve operator registration{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <!-- Operator Summary -->
+        <div class="border-b border-gray-200 pb-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                        <i class="fas fa-ship text-blue-600 text-2xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">{{ operator.company_name }}</h2>
+                        <p class="text-gray-600">{{ operator.contact_person }}</p>
+                        <p class="text-sm text-gray-500">{{ operator.email }} • {{ operator.phone_number }}</p>
+                    </div>
+                </div>
+                <span class="px-4 py-2 rounded-full text-sm font-semibold
+                    {% if operator.verification_status == 'verified' %}bg-green-100 text-green-800
+                    {% elif operator.verification_status == 'pending' %}bg-yellow-100 text-yellow-800
+                    {% elif operator.verification_status == 'suspended' %}bg-red-100 text-red-800
+                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                    {{ operator.verification_status|title }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Verification Checklist -->
+        <div class="mb-8">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">Verification Checklist</h3>
+            <div class="space-y-3">
+                <div class="flex items-center">
+                    <div class="w-6 h-6 rounded-full flex items-center justify-center mr-3
+                        {% if operator.business_license %}bg-green-100 text-green-600{% else %}bg-red-100 text-red-600{% endif %}">
+                        <i class="fas {% if operator.business_license %}fa-check{% else %}fa-times{% endif %} text-sm"></i>
+                    </div>
+                    <span class="text-gray-700">Business License Number Provided</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-6 h-6 rounded-full flex items-center justify-center mr-3
+                        {% if operator.license_document %}bg-green-100 text-green-600{% else %}bg-red-100 text-red-600{% endif %}">
+                        <i class="fas {% if operator.license_document %}fa-check{% else %}fa-times{% endif %} text-sm"></i>
+                    </div>
+                    <span class="text-gray-700">Business License Document Uploaded</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-6 h-6 rounded-full flex items-center justify-center mr-3
+                        {% if operator.boat_registration %}bg-green-100 text-green-600{% else %}bg-red-100 text-red-600{% endif %}">
+                        <i class="fas {% if operator.boat_registration %}fa-check{% else %}fa-times{% endif %} text-sm"></i>
+                    </div>
+                    <span class="text-gray-700">Boat Registration Document Uploaded</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-6 h-6 rounded-full flex items-center justify-center mr-3
+                        {% if operator.insurance_document %}bg-green-100 text-green-600{% else %}bg-red-100 text-red-600{% endif %}">
+                        <i class="fas {% if operator.insurance_document %}fa-check{% else %}fa-times{% endif %} text-sm"></i>
+                    </div>
+                    <span class="text-gray-700">Insurance Document Uploaded</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-6 h-6 rounded-full flex items-center justify-center mr-3
+                        {% if operator.service_islands %}bg-green-100 text-green-600{% else %}bg-red-100 text-red-600{% endif %}">
+                        <i class="fas {% if operator.service_islands %}fa-check{% else %}fa-times{% endif %} text-sm"></i>
+                    </div>
+                    <span class="text-gray-700">Service Areas Specified</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Documents Review -->
+        <div class="mb-8">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">Document Review</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <h4 class="font-semibold text-gray-700 mb-3">Business License</h4>
+                    <div class="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center mb-3">
+                        {% if operator.license_document %}
+                            <img src="{{ operator.license_document.url }}" alt="License" class="w-full h-full object-cover rounded-lg cursor-pointer" onclick="openImageModal('{{ operator.license_document.url }}')">
+                        {% else %}
+                            <div class="text-center text-gray-400">
+                                <i class="fas fa-file-alt text-4xl mb-2"></i>
+                                <p class="text-sm">Not uploaded</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="text-center">
+                    <h4 class="font-semibold text-gray-700 mb-3">Boat Registration</h4>
+                    <div class="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center mb-3">
+                        {% if operator.boat_registration %}
+                            <img src="{{ operator.boat_registration.url }}" alt="Registration" class="w-full h-full object-cover rounded-lg cursor-pointer" onclick="openImageModal('{{ operator.boat_registration.url }}')">
+                        {% else %}
+                            <div class="text-center text-gray-400">
+                                <i class="fas fa-ship text-4xl mb-2"></i>
+                                <p class="text-sm">Not uploaded</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="text-center">
+                    <h4 class="font-semibold text-gray-700 mb-3">Insurance Document</h4>
+                    <div class="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center mb-3">
+                        {% if operator.insurance_document %}
+                            <img src="{{ operator.insurance_document.url }}" alt="Insurance" class="w-full h-full object-cover rounded-lg cursor-pointer" onclick="openImageModal('{{ operator.insurance_document.url }}')">
+                        {% else %}
+                            <div class="text-center text-gray-400">
+                                <i class="fas fa-shield-alt text-4xl mb-2"></i>
+                                <p class="text-sm">Not uploaded</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Form -->
+        <form method="post" class="border-t border-gray-200 pt-6">
+            {% csrf_token %}
+            
+            {% if operator.verification_status == 'pending' %}
+            <div class="mb-6">
+                <label for="notes" class="block text-sm font-semibold text-gray-700 mb-2">
+                    Admin Notes (Optional)
+                </label>
+                <textarea 
+                    name="notes" 
+                    id="notes" 
+                    rows="3" 
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Add any notes about the verification decision..."
+                ></textarea>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-4">
+                <button 
+                    type="submit" 
+                    name="action" 
+                    value="approve"
+                    class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition flex items-center justify-center"
+                >
+                    <i class="fas fa-check mr-2"></i>
+                    Approve Operator
+                </button>
+                <button 
+                    type="submit" 
+                    name="action" 
+                    value="reject"
+                    class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition flex items-center justify-center"
+                >
+                    <i class="fas fa-times mr-2"></i>
+                    Reject Application
+                </button>
+            </div>
+            {% elif operator.verification_status == 'verified' %}
+            <div class="mb-6">
+                <label for="notes" class="block text-sm font-semibold text-gray-700 mb-2">
+                    Suspension Reason
+                </label>
+                <textarea 
+                    name="notes" 
+                    id="notes" 
+                    rows="3" 
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Explain why this operator is being suspended..."
+                    required
+                ></textarea>
+            </div>
+
+            <button 
+                type="submit" 
+                name="action" 
+                value="suspend"
+                class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition flex items-center justify-center"
+            >
+                <i class="fas fa-ban mr-2"></i>
+                Suspend Operator
+            </button>
+            {% endif %}
+        </form>
+
+        <div class="mt-6 text-center">
+            <a href="{% url 'admin_operators' %}" class="text-gray-600 hover:text-gray-800 font-semibold">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Operators List
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+    <div class="max-w-4xl max-h-full p-4">
+        <img id="modalImage" src="" alt="Document" class="max-w-full max-h-full object-contain">
+        <button onclick="closeImageModal()" class="absolute top-4 right-4 text-white text-2xl hover:text-gray-300">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+</div>
+
+<script>
+function openImageModal(imageSrc) {
+    document.getElementById('modalImage').src = imageSrc;
+    document.getElementById('imageModal').classList.remove('hidden');
+}
+
+function closeImageModal() {
+    document.getElementById('imageModal').classList.add('hidden');
+}
+
+// Close modal when clicking outside the image
+document.getElementById('imageModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeImageModal();
+    }
+});
+</script>
+{% endblock %}

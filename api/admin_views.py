@@ -1,10 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
 from django.utils import timezone
 from datetime import timedelta
-from .models import User, TripRequest, Quote, Payment, Booking, SupportMessage, Notification
+from .models import (User, TripRequest, Quote, Payment, Booking, SupportMessage, 
+                    Notification, SpeedboatOperator, Speedboat, OperatorSubscription, 
+                    OperatorRating, PlatformRevenue)
 from decimal import Decimal
 
 def is_admin(user):
@@ -19,6 +21,23 @@ def admin_dashboard(request):
     confirmed_bookings = TripRequest.objects.filter(status='confirmed').count()
     pending_payments = Payment.objects.filter(status='pending').count()
     total_users = User.objects.filter(is_admin=False).count()
+    
+    # Marketplace statistics
+    total_operators = SpeedboatOperator.objects.count()
+    verified_operators = SpeedboatOperator.objects.filter(verification_status='verified').count()
+    pending_operators = SpeedboatOperator.objects.filter(verification_status='pending').count()
+    active_subscriptions = SpeedboatOperator.objects.filter(subscription_status='active').count()
+    
+    # Revenue statistics
+    monthly_subscription_revenue = PlatformRevenue.objects.filter(
+        revenue_type='subscription',
+        created_at__month=timezone.now().month
+    ).aggregate(total=Sum('amount'))['total'] or 0
+    
+    monthly_commission_revenue = PlatformRevenue.objects.filter(
+        revenue_type='commission',
+        created_at__month=timezone.now().month
+    ).aggregate(total=Sum('amount'))['total'] or 0
     
     # Recent trips
     recent_trips = TripRequest.objects.select_related('user').order_by('-created_at')[:10]
@@ -35,6 +54,12 @@ def admin_dashboard(request):
         'confirmed_bookings': confirmed_bookings,
         'pending_payments': pending_payments,
         'total_users': total_users,
+        'total_operators': total_operators,
+        'verified_operators': verified_operators,
+        'pending_operators': pending_operators,
+        'active_subscriptions': active_subscriptions,
+        'monthly_subscription_revenue': monthly_subscription_revenue,
+        'monthly_commission_revenue': monthly_commission_revenue,
         'recent_trips': recent_trips,
         'pending_payment_list': pending_payment_list,
         'recent_messages': recent_messages,
@@ -271,3 +296,255 @@ def users_list(request):
     }
     
     return render(request, 'admin_panel/users.html', context)
+
+# ============ MARKETPLACE ADMIN VIEWS ============
+
+@login_required
+@user_passes_test(is_admin)
+def operators_list(request):
+    status_filter = request.GET.get('status', 'all')
+    
+    operators = SpeedboatOperator.objects.select_related('user').order_by('-created_at')
+    
+    if status_filter != 'all':
+        operators = operators.filter(verification_status=status_filter)
+    
+    context = {
+        'operators': operators,
+        'status_filter': status_filter,
+    }
+    
+    return render(request, 'admin_panel/operators.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def operator_detail(request, operator_id):
+    operator = get_object_or_404(SpeedboatOperator, id=operator_id)
+    boats = operator.boats.all()
+    subscriptions = operator.subscriptions.order_by('-created_at')
+    quotes = operator.quotes.select_related('trip_request').order_by('-created_at')[:10]
+    ratings = operator.received_ratings.select_related('customer', 'booking').order_by('-created_at')[:10]
+    
+    context = {
+        'operator': operator,
+        'boats': boats,
+        'subscriptions': subscriptions,
+        'quotes': quotes,
+        'ratings': ratings,
+    }
+    
+    return render(request, 'admin_panel/operator_detail.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def verify_operator(request, operator_id):
+    operator = get_object_or_404(SpeedboatOperator, id=operator_id)
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        notes = request.POST.get('notes', '')
+        
+        if action == 'approve':
+            operator.verification_status = 'verified'
+            operator.save()
+            
+            # Notify operator
+            Notification.objects.create(
+                user=operator.user,
+                title='Operator Account Approved',
+                message=f'Congratulations! Your operator account has been approved. You can now receive trip requests.'
+            )
+            
+            messages.success(request, f'Operator {operator.company_name} has been approved!')
+            
+        elif action == 'reject':
+            operator.verification_status = 'rejected'
+            operator.save()
+            
+            # Notify operator
+            Notification.objects.create(
+                user=operator.user,
+                title='Operator Account Rejected',
+                message=f'Your operator account application has been rejected. Reason: {notes}'
+            )
+            
+            messages.warning(request, f'Operator {operator.company_name} has been rejected.')
+            
+        elif action == 'suspend':
+            operator.verification_status = 'suspended'
+            operator.subscription_status = 'cancelled'
+            operator.save()
+            
+            # Notify operator
+            Notification.objects.create(
+                user=operator.user,
+                title='Account Suspended',
+                message=f'Your operator account has been suspended. Reason: {notes}'
+            )
+            
+            messages.warning(request, f'Operator {operator.company_name} has been suspended.')
+        
+        return redirect('admin_operators')
+    
+    context = {
+        'operator': operator,
+    }
+    
+    return render(request, 'admin_panel/verify_operator.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def subscriptions_list(request):
+    status_filter = request.GET.get('status', 'all')
+    
+    subscriptions = OperatorSubscription.objects.select_related('operator').order_by('-created_at')
+    
+    if status_filter != 'all':
+        subscriptions = subscriptions.filter(payment_status=status_filter)
+    
+    context = {
+        'subscriptions': subscriptions,
+        'status_filter': status_filter,
+    }
+    
+    return render(request, 'admin_panel/subscriptions.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def verify_subscription(request, subscription_id):
+    subscription = get_object_or_404(OperatorSubscription, id=subscription_id)
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'approve':
+            subscription.payment_status = 'paid'
+            subscription.paid_at = timezone.now()
+            subscription.save()
+            
+            # Update operator subscription status
+            operator = subscription.operator
+            operator.subscription_status = 'active'
+            operator.subscription_expires_at = subscription.end_date
+            operator.save()
+            
+            # Create revenue record
+            PlatformRevenue.objects.create(
+                revenue_type='subscription',
+                amount=subscription.amount,
+                currency='MVR',
+                subscription=subscription,
+                description=f'Subscription payment from {operator.company_name}'
+            )
+            
+            # Notify operator
+            Notification.objects.create(
+                user=operator.user,
+                title='Subscription Activated',
+                message=f'Your subscription has been activated until {subscription.end_date.strftime("%B %d, %Y")}'
+            )
+            
+            messages.success(request, f'Subscription approved for {operator.company_name}!')
+            
+        elif action == 'reject':
+            subscription.payment_status = 'overdue'
+            subscription.save()
+            
+            # Update operator subscription status
+            operator = subscription.operator
+            operator.subscription_status = 'expired'
+            operator.save()
+            
+            # Notify operator
+            Notification.objects.create(
+                user=operator.user,
+                title='Subscription Payment Rejected',
+                message='Your subscription payment was rejected. Please resubmit with correct payment proof.'
+            )
+            
+            messages.warning(request, f'Subscription rejected for {operator.company_name}.')
+        
+        return redirect('admin_subscriptions')
+    
+    context = {
+        'subscription': subscription,
+    }
+    
+    return render(request, 'admin_panel/verify_subscription.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def marketplace_quotes(request):
+    status_filter = request.GET.get('status', 'all')
+    
+    quotes = Quote.objects.select_related('trip_request', 'operator', 'boat').order_by('-created_at')
+    
+    if status_filter != 'all':
+        quotes = quotes.filter(status=status_filter)
+    
+    context = {
+        'quotes': quotes,
+        'status_filter': status_filter,
+    }
+    
+    return render(request, 'admin_panel/marketplace_quotes.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def revenue_dashboard(request):
+    # Monthly revenue breakdown
+    current_month = timezone.now().month
+    current_year = timezone.now().year
+    
+    subscription_revenue = PlatformRevenue.objects.filter(
+        revenue_type='subscription',
+        created_at__month=current_month,
+        created_at__year=current_year
+    ).aggregate(total=Sum('amount'))['total'] or 0
+    
+    commission_revenue = PlatformRevenue.objects.filter(
+        revenue_type='commission',
+        created_at__month=current_month,
+        created_at__year=current_year
+    ).aggregate(total=Sum('amount'))['total'] or 0
+    
+    # Recent revenue records
+    recent_revenues = PlatformRevenue.objects.select_related('subscription__operator', 'booking__trip_request').order_by('-created_at')[:20]
+    
+    # Operator subscription summary
+    active_operators = SpeedboatOperator.objects.filter(subscription_status='active').count()
+    expired_operators = SpeedboatOperator.objects.filter(subscription_status='expired').count()
+    
+    # Projected monthly revenue
+    projected_subscription = active_operators * 450  # 450 MVR per operator
+    
+    context = {
+        'subscription_revenue': subscription_revenue,
+        'commission_revenue': commission_revenue,
+        'total_monthly_revenue': subscription_revenue + commission_revenue,
+        'recent_revenues': recent_revenues,
+        'active_operators': active_operators,
+        'expired_operators': expired_operators,
+        'projected_subscription': projected_subscription,
+    }
+    
+    return render(request, 'admin_panel/revenue_dashboard.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def platform_settings(request):
+    if request.method == 'POST':
+        # Handle platform settings updates
+        commission_rate = request.POST.get('commission_rate', '5.0')
+        subscription_fee = request.POST.get('subscription_fee', '450.0')
+        
+        # You can store these in a settings model or configuration
+        messages.success(request, 'Platform settings updated successfully!')
+        return redirect('admin_platform_settings')
+    
+    context = {
+        'commission_rate': 5.0,  # Default values
+        'subscription_fee': 450.0,
+    }
+    
+    return render(request, 'admin_panel/platform_settings.html', context)

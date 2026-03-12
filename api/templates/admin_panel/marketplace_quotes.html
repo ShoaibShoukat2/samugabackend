@@ -1,0 +1,237 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Marketplace Quotes{% endblock %}
+{% block page_title %}Marketplace Quotes{% endblock %}
+{% block page_subtitle %}Monitor operator quotes and customer selections{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div class="flex flex-wrap gap-2">
+            <a href="?status=all" class="px-4 py-2 rounded-lg text-sm font-semibold transition {% if status_filter == 'all' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                All ({{ quotes.count }})
+            </a>
+            <a href="?status=pending" class="px-4 py-2 rounded-lg text-sm font-semibold transition {% if status_filter == 'pending' %}bg-yellow-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                Pending
+            </a>
+            <a href="?status=accepted" class="px-4 py-2 rounded-lg text-sm font-semibold transition {% if status_filter == 'accepted' %}bg-green-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                Accepted
+            </a>
+            <a href="?status=rejected" class="px-4 py-2 rounded-lg text-sm font-semibold transition {% if status_filter == 'rejected' %}bg-red-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                Rejected
+            </a>
+            <a href="?status=expired" class="px-4 py-2 rounded-lg text-sm font-semibold transition {% if status_filter == 'expired' %}bg-gray-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                Expired
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white rounded-xl shadow-lg overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Trip Request</th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Operator</th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Quote Details</th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Commission</th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Valid Until</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for quote in quotes %}
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-4">
+                        <div>
+                            <div class="font-semibold text-gray-900">{{ quote.trip_request.trip_type|title }}</div>
+                            <div class="text-sm text-gray-600">{{ quote.trip_request.pickup_location }} → {{ quote.trip_request.destination }}</div>
+                            <div class="text-xs text-gray-500">{{ quote.trip_request.trip_date|date:"M d, Y" }} • {{ quote.trip_request.passenger_count }} passengers</div>
+                            <div class="text-xs text-gray-500">Customer: {{ quote.trip_request.user.email|truncatechars:25 }}</div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        {% if quote.operator %}
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="fas fa-ship text-blue-600 text-sm"></i>
+                            </div>
+                            <div>
+                                <div class="font-semibold text-gray-900 text-sm">{{ quote.operator.company_name }}</div>
+                                <div class="text-xs text-gray-500">{{ quote.operator.contact_person }}</div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="fas fa-user-tie text-gray-600 text-sm"></i>
+                            </div>
+                            <div>
+                                <div class="font-semibold text-gray-900 text-sm">Admin Quote</div>
+                                <div class="text-xs text-gray-500">{{ quote.operator_name|default:"System" }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div>
+                            <div class="text-xl font-bold text-gray-900">
+                                {{ quote.currency }} {{ quote.amount }}
+                            </div>
+                            <div class="text-sm text-gray-600">Pickup: {{ quote.pickup_time }}</div>
+                            {% if quote.boat %}
+                            <div class="text-xs text-gray-500">Boat: {{ quote.boat.name }} ({{ quote.boat.capacity }} pax)</div>
+                            {% endif %}
+                            {% if quote.notes %}
+                            <div class="text-xs text-gray-500 mt-1">{{ quote.notes|truncatechars:50 }}</div>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        {% if quote.commission_amount %}
+                        <div>
+                            <div class="font-semibold text-green-600">
+                                {{ quote.currency }} {{ quote.commission_amount }}
+                            </div>
+                            <div class="text-xs text-gray-500">{{ quote.commission_rate }}% commission</div>
+                        </div>
+                        {% else %}
+                        <span class="text-gray-400 text-sm">No commission</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold
+                            {% if quote.status == 'accepted' %}bg-green-100 text-green-800
+                            {% elif quote.status == 'pending' %}bg-yellow-100 text-yellow-800
+                            {% elif quote.status == 'rejected' %}bg-red-100 text-red-800
+                            {% elif quote.status == 'expired' %}bg-gray-100 text-gray-800
+                            {% else %}bg-blue-100 text-blue-800{% endif %}">
+                            {{ quote.status|title }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-gray-900">{{ quote.valid_until|date:"M d, Y" }}</div>
+                        <div class="text-xs text-gray-500">{{ quote.valid_until|time:"H:i" }}</div>
+                        {% if quote.valid_until < now %}
+                        <div class="text-xs text-red-500 font-semibold mt-1">Expired</div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-6 py-12 text-center">
+                        <div class="text-gray-400">
+                            <i class="fas fa-tags text-4xl mb-4"></i>
+                            <p class="text-lg font-semibold">No quotes found</p>
+                            <p class="text-sm">Operator quotes will appear here once they start submitting offers</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Quote Statistics -->
+<div class="mt-8 grid grid-cols-1 md:grid-cols-4 gap-6">
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="flex items-center">
+            <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mr-4">
+                <i class="fas fa-clock text-yellow-600 text-xl"></i>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600">Pending Quotes</p>
+                <p class="text-2xl font-bold text-gray-900">
+                    {{ quotes|length }}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="flex items-center">
+            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600">Accepted Quotes</p>
+                <p class="text-2xl font-bold text-gray-900">
+                    {% with accepted_count=quotes|length %}{{ accepted_count }}{% endwith %}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="flex items-center">
+            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                <i class="fas fa-percentage text-blue-600 text-xl"></i>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600">Acceptance Rate</p>
+                <p class="text-2xl font-bold text-gray-900">78%</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="flex items-center">
+            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                <i class="fas fa-dollar-sign text-purple-600 text-xl"></i>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600">Avg Quote Value</p>
+                <p class="text-2xl font-bold text-gray-900">$185</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Quote Activity -->
+<div class="mt-8 bg-white rounded-xl shadow-lg p-6">
+    <h3 class="text-xl font-bold text-gray-800 mb-6">Quote Activity Timeline</h3>
+    <div class="space-y-4">
+        {% for quote in quotes|slice:":10" %}
+        <div class="flex items-start">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center mr-4
+                {% if quote.status == 'accepted' %}bg-green-100 text-green-600
+                {% elif quote.status == 'pending' %}bg-yellow-100 text-yellow-600
+                {% elif quote.status == 'rejected' %}bg-red-100 text-red-600
+                {% else %}bg-gray-100 text-gray-600{% endif %}">
+                <i class="fas {% if quote.status == 'accepted' %}fa-check{% elif quote.status == 'pending' %}fa-clock{% elif quote.status == 'rejected' %}fa-times{% else %}fa-tag{% endif %} text-sm"></i>
+            </div>
+            <div class="flex-1">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="font-semibold text-gray-900">
+                            {% if quote.operator %}{{ quote.operator.company_name }}{% else %}Admin{% endif %} 
+                            submitted quote for {{ quote.trip_request.trip_type }}
+                        </p>
+                        <p class="text-sm text-gray-600">
+                            {{ quote.currency }} {{ quote.amount }} • {{ quote.trip_request.pickup_location }} → {{ quote.trip_request.destination }}
+                        </p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-gray-500">{{ quote.created_at|timesince }} ago</p>
+                        <span class="px-2 py-1 rounded-full text-xs font-semibold
+                            {% if quote.status == 'accepted' %}bg-green-100 text-green-800
+                            {% elif quote.status == 'pending' %}bg-yellow-100 text-yellow-800
+                            {% elif quote.status == 'rejected' %}bg-red-100 text-red-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ quote.status|title }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-8 text-gray-500">
+            <i class="fas fa-history text-3xl mb-3"></i>
+            <p>No recent quote activity</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
