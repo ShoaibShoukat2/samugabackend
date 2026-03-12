@@ -6,21 +6,125 @@
     <title>{% block title %}Admin Panel{% endblock %} - SamugaTravels</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Fallback CSS in case Tailwind doesn't load -->
+    <noscript>
+        <style>
+            body { background-color: #f9fafb; font-family: Arial, sans-serif; }
+            button, .btn { background-color: #3b82f6; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; }
+            .bg-white { background-color: white; }
+            .text-gray-800 { color: #1f2937; }
+        </style>
+    </noscript>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f9fafb !important;
+            color: #111827 !important;
+        }
         
-        /* Fallback styles to ensure buttons are always visible */
-        button, .btn, [type="submit"] {
+        /* Force visibility for all interactive elements */
+        button, .btn, [type="submit"], input[type="submit"], .button {
             display: inline-block !important;
             visibility: visible !important;
             opacity: 1 !important;
             cursor: pointer !important;
+            background-color: #3b82f6 !important;
+            color: white !important;
+            padding: 8px 16px !important;
+            border-radius: 6px !important;
+            border: none !important;
+            text-decoration: none !important;
+            font-weight: 500 !important;
+        }
+        
+        button:hover, .btn:hover, [type="submit"]:hover {
+            background-color: #2563eb !important;
         }
         
         /* Ensure all interactive elements are visible */
-        a, button, input, select, textarea {
+        a, button, input, select, textarea, .clickable {
             visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        /* Fix for dark theme issues */
+        .bg-white { background-color: white !important; }
+        .text-gray-800 { color: #1f2937 !important; }
+        .text-gray-600 { color: #4b5563 !important; }
+        .text-gray-900 { color: #111827 !important; }
+        
+        /* Ensure cards are visible */
+        .bg-white, .card, .panel {
+            background-color: white !important;
+            color: #111827 !important;
+            border: 1px solid #e5e7eb !important;
+        }
+        
+        /* Fix table visibility */
+        table, th, td {
+            background-color: white !important;
+            color: #111827 !important;
+            border: 1px solid #e5e7eb !important;
+        }
+        
+        /* Fix form elements */
+        input, select, textarea {
+            background-color: white !important;
+            color: #111827 !important;
+            border: 1px solid #d1d5db !important;
+            padding: 8px 12px !important;
+            border-radius: 6px !important;
+        }
+        
+        /* Sidebar styling */
+        #sidebar {
+            background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%) !important;
+            color: white !important;
+        }
+        
+        /* Custom scrollbar for sidebar */
+        #sidebar nav::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        #sidebar nav::-webkit-scrollbar-track {
+            background: rgba(59, 130, 246, 0.3);
+            border-radius: 3px;
+        }
+        
+        #sidebar nav::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.8);
+            border-radius: 3px;
+        }
+        
+        #sidebar nav::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 1);
+        }
+        
+        /* Firefox scrollbar */
+        #sidebar nav {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(59, 130, 246, 0.8) rgba(59, 130, 246, 0.3);
+        }
+        
+        /* Success buttons */
+        .btn-success, .bg-green-600 {
+            background-color: #16a34a !important;
+            color: white !important;
+        }
+        
+        /* Danger buttons */
+        .btn-danger, .bg-red-600 {
+            background-color: #dc2626 !important;
+            color: white !important;
+        }
+        
+        /* Warning buttons */
+        .btn-warning, .bg-yellow-600 {
+            background-color: #ca8a04 !important;
+            color: white !important;
         }
     </style>
 </head>
@@ -31,8 +135,8 @@
     </button>
 
     <!-- Sidebar -->
-    <div id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-gradient-to-b from-blue-600 to-blue-800 text-white shadow-2xl z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
-        <div class="p-6">
+    <div id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-gradient-to-b from-blue-600 to-blue-800 text-white shadow-2xl z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col">
+        <div class="p-6 flex-shrink-0">
             <h1 class="text-2xl font-bold flex items-center">
                 <i class="fas fa-ship mr-3"></i>
                 SamugaTravels
@@ -40,63 +144,67 @@
             <p class="text-blue-200 text-sm mt-1">Admin Panel</p>
         </div>
         
-        <nav class="mt-6">
-            <a href="{% url 'admin_dashboard' %}" class="flex items-center px-6 py-3 hover:bg-blue-700 transition {% if request.resolver_match.url_name == 'admin_dashboard' %}bg-blue-700 border-l-4 border-white{% endif %}">
-                <i class="fas fa-chart-line w-6"></i>
-                <span class="ml-3">Dashboard</span>
-            </a>
-            
-            <!-- Trip Management -->
-            <div class="px-6 py-2 text-blue-200 text-xs uppercase tracking-wider font-semibold">Trip Management</div>
-            <a href="{% url 'admin_trip_requests' %}" class="flex items-center px-6 py-3 hover:bg-blue-700 transition {% if 'trip' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
-                <i class="fas fa-suitcase w-6"></i>
-                <span class="ml-3">Trip Requests</span>
-            </a>
-            <a href="{% url 'admin_payments' %}" class="flex items-center px-6 py-3 hover:bg-blue-700 transition {% if 'payment' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
-                <i class="fas fa-credit-card w-6"></i>
-                <span class="ml-3">Payments</span>
-            </a>
-            <a href="{% url 'admin_bookings' %}" class="flex items-center px-6 py-3 hover:bg-blue-700 transition {% if 'booking' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
-                <i class="fas fa-ticket-alt w-6"></i>
-                <span class="ml-3">Bookings</span>
-            </a>
-            
-            <!-- Marketplace Management -->
-            <div class="px-6 py-2 text-blue-200 text-xs uppercase tracking-wider font-semibold mt-4">Marketplace</div>
-            <a href="{% url 'admin_operators' %}" class="flex items-center px-6 py-3 hover:bg-blue-700 transition {% if 'operator' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
-                <i class="fas fa-ship w-6"></i>
-                <span class="ml-3">Operators</span>
-            </a>
-            <a href="{% url 'admin_subscriptions' %}" class="flex items-center px-6 py-3 hover:bg-blue-700 transition {% if 'subscription' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
-                <i class="fas fa-calendar-check w-6"></i>
-                <span class="ml-3">Subscriptions</span>
-            </a>
-            <a href="{% url 'admin_marketplace_quotes' %}" class="flex items-center px-6 py-3 hover:bg-blue-700 transition {% if 'marketplace_quotes' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
-                <i class="fas fa-tags w-6"></i>
-                <span class="ml-3">Marketplace Quotes</span>
-            </a>
-            <a href="{% url 'admin_revenue_dashboard' %}" class="flex items-center px-6 py-3 hover:bg-blue-700 transition {% if 'revenue' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
-                <i class="fas fa-dollar-sign w-6"></i>
-                <span class="ml-3">Revenue</span>
-            </a>
-            
-            <!-- System Management -->
-            <div class="px-6 py-2 text-blue-200 text-xs uppercase tracking-wider font-semibold mt-4">System</div>
-            <a href="{% url 'admin_users' %}" class="flex items-center px-6 py-3 hover:bg-blue-700 transition {% if 'user' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
-                <i class="fas fa-users w-6"></i>
-                <span class="ml-3">Users</span>
-            </a>
-            <a href="{% url 'admin_support' %}" class="flex items-center px-6 py-3 hover:bg-blue-700 transition {% if 'support' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
-                <i class="fas fa-headset w-6"></i>
-                <span class="ml-3">Support</span>
-            </a>
-            <a href="{% url 'admin_platform_settings' %}" class="flex items-center px-6 py-3 hover:bg-blue-700 transition {% if 'settings' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
-                <i class="fas fa-cog w-6"></i>
-                <span class="ml-3">Settings</span>
-            </a>
+        <!-- Scrollable Navigation -->
+        <nav class="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-blue-700 px-2">
+            <div class="pb-20">
+                <a href="{% url 'admin_dashboard' %}" class="flex items-center px-4 py-3 mx-2 rounded-lg hover:bg-blue-700 transition {% if request.resolver_match.url_name == 'admin_dashboard' %}bg-blue-700 border-l-4 border-white{% endif %}">
+                    <i class="fas fa-chart-line w-6"></i>
+                    <span class="ml-3">Dashboard</span>
+                </a>
+                
+                <!-- Trip Management -->
+                <div class="px-4 py-2 text-blue-200 text-xs uppercase tracking-wider font-semibold mt-4">Trip Management</div>
+                <a href="{% url 'admin_trip_requests' %}" class="flex items-center px-4 py-3 mx-2 rounded-lg hover:bg-blue-700 transition {% if 'trip' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
+                    <i class="fas fa-suitcase w-6"></i>
+                    <span class="ml-3">Trip Requests</span>
+                </a>
+                <a href="{% url 'admin_payments' %}" class="flex items-center px-4 py-3 mx-2 rounded-lg hover:bg-blue-700 transition {% if 'payment' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
+                    <i class="fas fa-credit-card w-6"></i>
+                    <span class="ml-3">Payments</span>
+                </a>
+                <a href="{% url 'admin_bookings' %}" class="flex items-center px-4 py-3 mx-2 rounded-lg hover:bg-blue-700 transition {% if 'booking' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
+                    <i class="fas fa-ticket-alt w-6"></i>
+                    <span class="ml-3">Bookings</span>
+                </a>
+                
+                <!-- Marketplace Management -->
+                <div class="px-4 py-2 text-blue-200 text-xs uppercase tracking-wider font-semibold mt-4">Marketplace</div>
+                <a href="{% url 'admin_operators' %}" class="flex items-center px-4 py-3 mx-2 rounded-lg hover:bg-blue-700 transition {% if 'operator' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
+                    <i class="fas fa-ship w-6"></i>
+                    <span class="ml-3">Operators</span>
+                </a>
+                <a href="{% url 'admin_subscriptions' %}" class="flex items-center px-4 py-3 mx-2 rounded-lg hover:bg-blue-700 transition {% if 'subscription' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
+                    <i class="fas fa-calendar-check w-6"></i>
+                    <span class="ml-3">Subscriptions</span>
+                </a>
+                <a href="{% url 'admin_marketplace_quotes' %}" class="flex items-center px-4 py-3 mx-2 rounded-lg hover:bg-blue-700 transition {% if 'marketplace_quotes' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
+                    <i class="fas fa-tags w-6"></i>
+                    <span class="ml-3">Marketplace Quotes</span>
+                </a>
+                <a href="{% url 'admin_revenue_dashboard' %}" class="flex items-center px-4 py-3 mx-2 rounded-lg hover:bg-blue-700 transition {% if 'revenue' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
+                    <i class="fas fa-dollar-sign w-6"></i>
+                    <span class="ml-3">Revenue</span>
+                </a>
+                
+                <!-- System Management -->
+                <div class="px-4 py-2 text-blue-200 text-xs uppercase tracking-wider font-semibold mt-4">System</div>
+                <a href="{% url 'admin_users' %}" class="flex items-center px-4 py-3 mx-2 rounded-lg hover:bg-blue-700 transition {% if 'user' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
+                    <i class="fas fa-users w-6"></i>
+                    <span class="ml-3">Users</span>
+                </a>
+                <a href="{% url 'admin_support' %}" class="flex items-center px-4 py-3 mx-2 rounded-lg hover:bg-blue-700 transition {% if 'support' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
+                    <i class="fas fa-headset w-6"></i>
+                    <span class="ml-3">Support</span>
+                </a>
+                <a href="{% url 'admin_platform_settings' %}" class="flex items-center px-4 py-3 mx-2 rounded-lg hover:bg-blue-700 transition {% if 'settings' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
+                    <i class="fas fa-cog w-6"></i>
+                    <span class="ml-3">Settings</span>
+                </a>
+            </div>
         </nav>
         
-        <div class="absolute bottom-0 w-full p-6 border-t border-blue-700">
+        <!-- Fixed Bottom User Section -->
+        <div class="flex-shrink-0 p-6 border-t border-blue-700 bg-blue-800">
             <div class="flex items-center">
                 <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
                     <i class="fas fa-user"></i>
@@ -137,6 +245,8 @@
     <script>
         // Ensure DOM is fully loaded
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('Admin panel loaded');
+            
             // Mobile menu toggle
             const mobileMenuBtn = document.getElementById('mobileMenuBtn');
             const sidebar = document.getElementById('sidebar');
@@ -164,12 +274,70 @@
                 });
             }, 5000);
             
-            // Force visibility of all buttons (fallback)
-            const buttons = document.querySelectorAll('button, [type="submit"], .btn');
+            // Force visibility and styling of all buttons (multiple attempts)
+            function forceButtonVisibility() {
+                const buttons = document.querySelectorAll('button, [type="submit"], .btn, input[type="submit"], .button');
+                console.log('Found buttons:', buttons.length);
+                
+                buttons.forEach((btn, index) => {
+                    console.log('Fixing button', index, btn);
+                    btn.style.visibility = 'visible';
+                    btn.style.opacity = '1';
+                    btn.style.display = 'inline-block';
+                    btn.style.backgroundColor = '#3b82f6';
+                    btn.style.color = 'white';
+                    btn.style.padding = '8px 16px';
+                    btn.style.borderRadius = '6px';
+                    btn.style.border = 'none';
+                    btn.style.cursor = 'pointer';
+                    btn.style.fontWeight = '500';
+                    
+                    // Add hover effect
+                    btn.addEventListener('mouseenter', function() {
+                        this.style.backgroundColor = '#2563eb';
+                    });
+                    btn.addEventListener('mouseleave', function() {
+                        this.style.backgroundColor = '#3b82f6';
+                    });
+                });
+                
+                // Fix links
+                const links = document.querySelectorAll('a');
+                links.forEach(link => {
+                    link.style.visibility = 'visible';
+                    link.style.opacity = '1';
+                });
+                
+                // Fix form elements
+                const inputs = document.querySelectorAll('input, select, textarea');
+                inputs.forEach(input => {
+                    input.style.visibility = 'visible';
+                    input.style.opacity = '1';
+                    input.style.backgroundColor = 'white';
+                    input.style.color = '#111827';
+                    input.style.border = '1px solid #d1d5db';
+                });
+            }
+            
+            // Run immediately
+            forceButtonVisibility();
+            
+            // Run again after a short delay
+            setTimeout(forceButtonVisibility, 100);
+            setTimeout(forceButtonVisibility, 500);
+            setTimeout(forceButtonVisibility, 1000);
+        });
+        
+        // Also run when window loads
+        window.addEventListener('load', function() {
+            console.log('Window loaded, forcing button visibility again');
+            const buttons = document.querySelectorAll('button, [type="submit"], .btn, input[type="submit"]');
             buttons.forEach(btn => {
                 btn.style.visibility = 'visible';
                 btn.style.opacity = '1';
                 btn.style.display = 'inline-block';
+                btn.style.backgroundColor = '#3b82f6';
+                btn.style.color = 'white';
             });
         });
     </script>
