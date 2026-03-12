@@ -65,7 +65,7 @@ def admin_dashboard(request):
         'recent_messages': recent_messages,
     }
     
-    return render(request, 'admin_panel/dashboard.html', context)
+    return render(request, 'admin_panel/dashboard_clean.html', context)
 
 @login_required
 @user_passes_test(is_admin)
