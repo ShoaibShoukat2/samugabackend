@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
+from decimal import Decimal
 import uuid
 
 class User(AbstractUser):
@@ -178,7 +179,7 @@ class Quote(models.Model):
     def save(self, *args, **kwargs):
         # Calculate commission amount
         if self.amount and self.commission_rate:
-            self.commission_amount = (self.amount * self.commission_rate) / 100
+            self.commission_amount = (self.amount * self.commission_rate) / Decimal('100')
         super().save(*args, **kwargs)
     
     def __str__(self):
