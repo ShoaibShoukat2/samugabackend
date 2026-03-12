@@ -3,533 +3,413 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Admin Panel{% endblock %} - SamugaTravels</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>{% block title %}Admin Panel - Samuga Travels{% endblock %}</title>
     
-    <!-- Fallback CSS in case Tailwind doesn't load -->
-    <noscript>
-        <style>
-            body { background-color: #f9fafb; font-family: Arial, sans-serif; }
-            button, .btn { background-color: #3b82f6; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; }
-            .bg-white { background-color: white; }
-            .text-gray-800 { color: #1f2937; }
-        </style>
-    </noscript>
+    <!-- Tailwind CSS CDN with custom config -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0066CC',
+                        secondary: '#1f2937',
+                        accent: '#10b981',
+                        warning: '#f59e0b',
+                        danger: '#ef4444',
+                        success: '#22c55e',
+                        info: '#3b82f6'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', 'sans-serif']
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                        'pulse-slow': 'pulse 3s infinite'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome & Google Fonts -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js for analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-        
-        /* Reset and base styles */
-        * {
-            box-sizing: border-box;
-        }
-        
-        body { 
-            font-family: 'Inter', sans-serif !important; 
-            background-color: #f9fafb !important;
-            color: #111827 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            overflow-x: hidden !important;
-        }
-        
-        /* Remove any dark overlays */
-        body::before, body::after, *::before, *::after {
-            background: none !important;
-            box-shadow: none !important;
-            backdrop-filter: none !important;
-        }
-        
-        /* Force remove any modal overlays */
-        .modal-backdrop, .overlay, .backdrop {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-        }
-        
-        /* Force visibility for all interactive elements */
-        button, .btn, [type="submit"], input[type="submit"], .button, a {
-            display: inline-block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            cursor: pointer !important;
-            pointer-events: auto !important;
-            z-index: 1000 !important;
-            position: relative !important;
-        }
-        
-        /* Button styling */
-        button, .btn, [type="submit"], input[type="submit"] {
-            background-color: #3b82f6 !important;
-            color: white !important;
-            padding: 8px 16px !important;
-            border-radius: 6px !important;
-            border: none !important;
-            text-decoration: none !important;
-            font-weight: 500 !important;
-            transition: all 0.2s ease !important;
-        }
-        
-        button:hover, .btn:hover, [type="submit"]:hover {
-            background-color: #2563eb !important;
-            transform: translateY(-1px) !important;
-        }
-        
-        /* Ensure main content is clickable */
-        .lg\\:ml-64 {
-            position: relative !important;
-            z-index: 10 !important;
-            background-color: #f9fafb !important;
-            min-height: 100vh !important;
-        }
-        
-        /* Fix for dark theme issues */
-        .bg-white, .card, .panel, .stat-card {
-            background-color: white !important;
-            color: #111827 !important;
-            border: 1px solid #e5e7eb !important;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important;
-        }
-        
-        .text-gray-800 { color: #1f2937 !important; }
-        .text-gray-600 { color: #4b5563 !important; }
-        .text-gray-900 { color: #111827 !important; }
-        
-        /* Ensure tables are visible */
-        table, th, td {
-            background-color: white !important;
-            color: #111827 !important;
-            border: 1px solid #e5e7eb !important;
-        }
-        
-        /* Fix form elements */
-        input, select, textarea {
-            background-color: white !important;
-            color: #111827 !important;
-            border: 1px solid #d1d5db !important;
-            padding: 8px 12px !important;
-            border-radius: 6px !important;
-        }
-        
-        /* Sidebar styling */
-        #sidebar {
-            background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%) !important;
-            color: white !important;
-            z-index: 50 !important;
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
         }
         
         /* Custom scrollbar for sidebar */
-        #sidebar nav::-webkit-scrollbar {
+        .sidebar-scroll::-webkit-scrollbar {
             width: 6px;
         }
-        
-        #sidebar nav::-webkit-scrollbar-track {
-            background: rgba(59, 130, 246, 0.3);
+        .sidebar-scroll::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+        .sidebar-scroll::-webkit-scrollbar-thumb {
+            background: #4b5563;
             border-radius: 3px;
         }
-        
-        #sidebar nav::-webkit-scrollbar-thumb {
-            background: rgba(59, 130, 246, 0.8);
-            border-radius: 3px;
-        }
-        
-        #sidebar nav::-webkit-scrollbar-thumb:hover {
-            background: rgba(59, 130, 246, 1);
+        .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
         }
         
         /* Firefox scrollbar */
-        #sidebar nav {
+        .sidebar-scroll {
             scrollbar-width: thin;
-            scrollbar-color: rgba(59, 130, 246, 0.8) rgba(59, 130, 246, 0.3);
+            scrollbar-color: #4b5563 #1f2937;
         }
         
-        /* Success buttons */
-        .btn-success, .bg-green-600 {
-            background-color: #16a34a !important;
-            color: white !important;
+        /* Custom animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
         
-        /* Danger buttons */
-        .btn-danger, .bg-red-600 {
-            background-color: #dc2626 !important;
-            color: white !important;
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
         
-        /* Warning buttons */
-        .btn-warning, .bg-yellow-600 {
-            background-color: #ca8a04 !important;
-            color: white !important;
+        /* Gradient backgrounds */
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .gradient-primary {
+            background: linear-gradient(135deg, #0066CC 0%, #004499 100%);
+        }
+        
+        .gradient-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        
+        .gradient-warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+        
+        .gradient-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        
+        /* Glass morphism effect */
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Hover effects */
+        .hover-lift {
+            transition: all 0.3s ease;
+        }
+        .hover-lift:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Status indicators */
+        .status-indicator {
+            position: relative;
+        }
+        .status-indicator::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        .status-indicator.online::before {
+            background-color: #22c55e;
+        }
+        .status-indicator.offline::before {
+            background-color: #ef4444;
+        }
+        
+        /* Force visibility for all interactive elements */
+        button, a, input, select, textarea {
+            opacity: 1 !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
         }
         
         /* Remove any potential dark overlays */
-        .dark, .dark-mode, .overlay-dark {
-            display: none !important;
+        * {
+            box-shadow: none !important;
         }
         
-        /* Force light theme */
-        html {
-            color-scheme: light !important;
-        }
-        
-        /* Ensure cards are properly styled */
-        .gradient-blue, .gradient-yellow, .gradient-green, .gradient-orange, .gradient-purple {
-            opacity: 1 !important;
-            visibility: visible !important;
-        }
-        
-        /* Fix any potential z-index issues */
-        .stat-card {
+        .no-overlay {
             position: relative !important;
-            z-index: 1 !important;
-        }
-        
-        /* Mobile menu button */
-        #mobileMenuBtn {
-            z-index: 60 !important;
-            position: fixed !important;
+            z-index: auto !important;
         }
     </style>
 </head>
-<body class="bg-gray-50">
-    <!-- Mobile Menu Button -->
-    <button id="mobileMenuBtn" class="lg:hidden fixed top-4 left-4 z-50 bg-blue-600 text-white p-3 rounded-lg shadow-lg">
-        <i class="fas fa-bars text-xl"></i>
-    </button>
-
-    <!-- Sidebar -->
-    <div id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-gradient-to-b from-blue-600 to-blue-800 text-white shadow-2xl z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col">
-        <div class="p-6 flex-shrink-0">
-            <h1 class="text-2xl font-bold flex items-center">
-                <i class="fas fa-ship mr-3"></i>
-                SamugaTravels
-            </h1>
-            <p class="text-blue-200 text-sm mt-1">Admin Panel</p>
-        </div>
-        
-        <!-- Scrollable Navigation -->
-        <nav class="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-blue-700 px-2">
-            <div class="pb-20">
-                <a href="{% url 'admin_dashboard' %}" class="flex items-center px-4 py-3 mx-2 rounded-lg hover:bg-blue-700 transition {% if request.resolver_match.url_name == 'admin_dashboard' %}bg-blue-700 border-l-4 border-white{% endif %}">
-                    <i class="fas fa-chart-line w-6"></i>
-                    <span class="ml-3">Dashboard</span>
-                </a>
-                
-                <!-- Trip Management -->
-                <div class="px-4 py-2 text-blue-200 text-xs uppercase tracking-wider font-semibold mt-4">Trip Management</div>
-                <a href="{% url 'admin_trip_requests' %}" class="flex items-center px-4 py-3 mx-2 rounded-lg hover:bg-blue-700 transition {% if 'trip' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
-                    <i class="fas fa-suitcase w-6"></i>
-                    <span class="ml-3">Trip Requests</span>
-                </a>
-                <a href="{% url 'admin_payments' %}" class="flex items-center px-4 py-3 mx-2 rounded-lg hover:bg-blue-700 transition {% if 'payment' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
-                    <i class="fas fa-credit-card w-6"></i>
-                    <span class="ml-3">Payments</span>
-                </a>
-                <a href="{% url 'admin_bookings' %}" class="flex items-center px-4 py-3 mx-2 rounded-lg hover:bg-blue-700 transition {% if 'booking' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
-                    <i class="fas fa-ticket-alt w-6"></i>
-                    <span class="ml-3">Bookings</span>
-                </a>
-                
-                <!-- Marketplace Management -->
-                <div class="px-4 py-2 text-blue-200 text-xs uppercase tracking-wider font-semibold mt-4">Marketplace</div>
-                <a href="{% url 'admin_operators' %}" class="flex items-center px-4 py-3 mx-2 rounded-lg hover:bg-blue-700 transition {% if 'operator' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
-                    <i class="fas fa-ship w-6"></i>
-                    <span class="ml-3">Operators</span>
-                </a>
-                <a href="{% url 'admin_subscriptions' %}" class="flex items-center px-4 py-3 mx-2 rounded-lg hover:bg-blue-700 transition {% if 'subscription' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
-                    <i class="fas fa-calendar-check w-6"></i>
-                    <span class="ml-3">Subscriptions</span>
-                </a>
-                <a href="{% url 'admin_marketplace_quotes' %}" class="flex items-center px-4 py-3 mx-2 rounded-lg hover:bg-blue-700 transition {% if 'marketplace_quotes' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
-                    <i class="fas fa-tags w-6"></i>
-                    <span class="ml-3">Marketplace Quotes</span>
-                </a>
-                <a href="{% url 'admin_revenue_dashboard' %}" class="flex items-center px-4 py-3 mx-2 rounded-lg hover:bg-blue-700 transition {% if 'revenue' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
-                    <i class="fas fa-dollar-sign w-6"></i>
-                    <span class="ml-3">Revenue</span>
-                </a>
-                
-                <!-- System Management -->
-                <div class="px-4 py-2 text-blue-200 text-xs uppercase tracking-wider font-semibold mt-4">System</div>
-                <a href="{% url 'admin_users' %}" class="flex items-center px-4 py-3 mx-2 rounded-lg hover:bg-blue-700 transition {% if 'user' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
-                    <i class="fas fa-users w-6"></i>
-                    <span class="ml-3">Users</span>
-                </a>
-                <a href="{% url 'admin_support' %}" class="flex items-center px-4 py-3 mx-2 rounded-lg hover:bg-blue-700 transition {% if 'support' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
-                    <i class="fas fa-headset w-6"></i>
-                    <span class="ml-3">Support</span>
-                </a>
-                <a href="{% url 'admin_platform_settings' %}" class="flex items-center px-4 py-3 mx-2 rounded-lg hover:bg-blue-700 transition {% if 'settings' in request.resolver_match.url_name %}bg-blue-700 border-l-4 border-white{% endif %}">
-                    <i class="fas fa-cog w-6"></i>
-                    <span class="ml-3">Settings</span>
-                </a>
-            </div>
-        </nav>
-        
-        <!-- Fixed Bottom User Section -->
-        <div class="flex-shrink-0 p-6 border-t border-blue-700 bg-blue-800">
-            <div class="flex items-center">
-                <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
-                    <i class="fas fa-user"></i>
-                </div>
-                <div class="ml-3">
-                    <p class="font-semibold">{{ request.user.first_name|default:request.user.username }}</p>
-                    <p class="text-xs text-blue-200">Administrator</p>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 font-sans">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Enhanced Sidebar -->
+        <div class="w-72 bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 text-white flex flex-col shadow-2xl">
+            <!-- Header with logo -->
+            <div class="p-6 border-b border-gray-700">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
+                        <i class="fas fa-ship text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-white">Admin Panel</h1>
+                        <p class="text-sm text-gray-300">Samuga Travels</p>
+                    </div>
                 </div>
             </div>
-            <a href="{% url 'admin_logout' %}" class="mt-4 block text-center py-2 bg-blue-700 hover:bg-blue-600 rounded-lg transition">
-                <i class="fas fa-sign-out-alt mr-2"></i>Logout
-            </a>
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="lg:ml-64 p-4 sm:p-6 md:p-8 pt-16 lg:pt-8">
-        <!-- Header -->
-        <div class="mb-6 sm:mb-8">
-            <h2 class="text-2xl sm:text-3xl font-bold text-gray-800">{% block page_title %}Dashboard{% endblock %}</h2>
-            <p class="text-sm sm:text-base text-gray-600 mt-1">{% block page_subtitle %}Welcome to your admin panel{% endblock %}</p>
-        </div>
-
-        <!-- Messages -->
-        {% if messages %}
-            {% for message in messages %}
-                <div class="mb-4 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800 border border-green-200{% elif message.tags == 'error' %}bg-red-100 text-red-800 border border-red-200{% else %}bg-blue-100 text-blue-800 border border-blue-200{% endif %}">
-                    <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} mr-2"></i>
-                    {{ message }}
+            
+            <!-- User Info with status -->
+            <div class="p-6 border-b border-gray-700">
+                <div class="flex items-center space-x-3">
+                    <div class="relative status-indicator online">
+                        <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-white text-sm"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-white">{{ request.user.first_name }} {{ request.user.last_name }}</p>
+                        <p class="text-xs text-gray-400">Administrator</p>
+                        <p class="text-xs text-green-400">● Online</p>
+                    </div>
                 </div>
-            {% endfor %}
-        {% endif %}
-
-        <!-- Content -->
-        {% block content %}{% endblock %}
-    </div>
-
-    <script>
-        // Ensure DOM is fully loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Admin panel loaded - fixing UI issues');
+            </div>
             
-            // Remove any dark overlays immediately
-            function removeDarkOverlays() {
-                // Remove common overlay classes
-                const overlays = document.querySelectorAll('.modal-backdrop, .overlay, .backdrop, .dark-overlay, .shadow-overlay');
-                overlays.forEach(overlay => {
-                    overlay.remove();
-                });
-                
-                // Remove dark mode classes
-                document.body.classList.remove('dark', 'dark-mode');
-                document.documentElement.classList.remove('dark', 'dark-mode');
-                
-                // Force light theme
-                document.documentElement.style.colorScheme = 'light';
-                document.body.style.backgroundColor = '#f9fafb';
-                document.body.style.color = '#111827';
-                
-                // Remove any potential dark filters
-                document.body.style.filter = 'none';
-                document.documentElement.style.filter = 'none';
-                
-                console.log('Dark overlays removed');
-            }
-            
-            // Mobile menu toggle
-            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-            const sidebar = document.getElementById('sidebar');
-            
-            if (mobileMenuBtn && sidebar) {
-                mobileMenuBtn.addEventListener('click', () => {
-                    sidebar.classList.toggle('-translate-x-full');
-                });
-                
-                // Close sidebar when clicking outside on mobile
-                document.addEventListener('click', (e) => {
-                    if (window.innerWidth < 1024 && !sidebar.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
-                        sidebar.classList.add('-translate-x-full');
-                    }
-                });
-            }
-
-            // Auto-hide messages after 5 seconds
-            setTimeout(() => {
-                const messages = document.querySelectorAll('[class*="bg-green-100"], [class*="bg-red-100"], [class*="bg-blue-100"]');
-                messages.forEach(msg => {
-                    msg.style.transition = 'opacity 0.5s';
-                    msg.style.opacity = '0';
-                    setTimeout(() => msg.remove(), 500);
-                });
-            }, 5000);
-            
-            // Force visibility and styling of all interactive elements
-            function forceElementVisibility() {
-                console.log('Forcing element visibility');
-                
-                // Fix buttons
-                const buttons = document.querySelectorAll('button, [type="submit"], .btn, input[type="submit"], .button');
-                console.log('Found buttons:', buttons.length);
-                
-                buttons.forEach((btn, index) => {
-                    btn.style.visibility = 'visible';
-                    btn.style.opacity = '1';
-                    btn.style.display = 'inline-block';
-                    btn.style.backgroundColor = '#3b82f6';
-                    btn.style.color = 'white';
-                    btn.style.padding = '8px 16px';
-                    btn.style.borderRadius = '6px';
-                    btn.style.border = 'none';
-                    btn.style.cursor = 'pointer';
-                    btn.style.fontWeight = '500';
-                    btn.style.pointerEvents = 'auto';
-                    btn.style.zIndex = '1000';
-                    btn.style.position = 'relative';
+            <!-- Enhanced Navigation - Scrollable -->
+            <nav class="flex-1 overflow-y-auto sidebar-scroll p-4">
+                <ul class="space-y-2">
+                    <!-- Dashboard -->
+                    <li>
+                        <a href="{% url 'admin_dashboard' %}" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-all duration-200 group no-overlay">
+                            <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="fas fa-tachometer-alt text-white text-sm"></i>
+                            </div>
+                            <span class="font-medium">Dashboard</span>
+                        </a>
+                    </li>
                     
-                    // Add hover effect
-                    btn.addEventListener('mouseenter', function() {
-                        this.style.backgroundColor = '#2563eb';
-                        this.style.transform = 'translateY(-1px)';
-                    });
-                    btn.addEventListener('mouseleave', function() {
-                        this.style.backgroundColor = '#3b82f6';
-                        this.style.transform = 'translateY(0)';
-                    });
-                });
+                    <!-- Trip Management Section -->
+                    <li class="pt-6">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-3">Trip Management</p>
+                    </li>
+                    <li>
+                        <a href="{% url 'admin_trip_requests' %}" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-all duration-200 group no-overlay">
+                            <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="fas fa-map-marked-alt text-white text-sm"></i>
+                            </div>
+                            <span class="font-medium">Trip Requests</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'admin_bookings' %}" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-all duration-200 group no-overlay">
+                            <div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="fas fa-calendar-check text-white text-sm"></i>
+                            </div>
+                            <span class="font-medium">Bookings</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'admin_payments' %}" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-all duration-200 group no-overlay">
+                            <div class="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="fas fa-credit-card text-white text-sm"></i>
+                            </div>
+                            <span class="font-medium">Payments</span>
+                        </a>
+                    </li>
+                    
+                    <!-- Marketplace Section -->
+                    <li class="pt-6">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-3">Marketplace</p>
+                    </li>
+                    <li>
+                        <a href="{% url 'admin_operators' %}" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-all duration-200 group no-overlay">
+                            <div class="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="fas fa-ship text-white text-sm"></i>
+                            </div>
+                            <span class="font-medium">Operators</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'admin_subscriptions' %}" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-all duration-200 group no-overlay">
+                            <div class="w-8 h-8 bg-pink-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="fas fa-crown text-white text-sm"></i>
+                            </div>
+                            <span class="font-medium">Subscriptions</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'admin_marketplace_quotes' %}" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-all duration-200 group no-overlay">
+                            <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="fas fa-tags text-white text-sm"></i>
+                            </div>
+                            <span class="font-medium">Marketplace Quotes</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'admin_revenue_dashboard' %}" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-all duration-200 group no-overlay">
+                            <div class="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="fas fa-chart-line text-white text-sm"></i>
+                            </div>
+                            <span class="font-medium">Revenue Dashboard</span>
+                        </a>
+                    </li>
+                    
+                    <!-- User Management Section -->
+                    <li class="pt-6">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-3">User Management</p>
+                    </li>
+                    <li>
+                        <a href="{% url 'admin_users' %}" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-all duration-200 group no-overlay">
+                            <div class="w-8 h-8 bg-teal-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="fas fa-users text-white text-sm"></i>
+                            </div>
+                            <span class="font-medium">Users</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'admin_support' %}" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-all duration-200 group no-overlay">
+                            <div class="w-8 h-8 bg-cyan-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="fas fa-headset text-white text-sm"></i>
+                            </div>
+                            <span class="font-medium">Support</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <!-- Enhanced Logout -->
+            <div class="p-4 border-t border-gray-700">
+                <a href="{% url 'admin:logout' %}" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-red-600 transition-all duration-200 text-red-300 hover:text-white group no-overlay">
+                    <div class="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <i class="fas fa-sign-out-alt text-white text-sm"></i>
+                    </div>
+                    <span class="font-medium">Logout</span>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Enhanced Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Enhanced Top Bar -->
+            <header class="bg-white/80 backdrop-blur-sm shadow-lg border-b border-gray-200/50 p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-900">{% block page_title %}Dashboard{% endblock %}</h2>
+                        <p class="text-gray-600 mt-1">Welcome back, manage your travel platform</p>
+                    </div>
+                    <div class="flex items-center space-x-6">
+                        <!-- Quick stats -->
+                        <div class="hidden md:flex items-center space-x-4">
+                            <div class="text-center">
+                                <p class="text-sm text-gray-500">Today</p>
+                                <p class="text-lg font-bold text-primary">{{ today_bookings|default:0 }}</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-sm text-gray-500">Revenue</p>
+                                <p class="text-lg font-bold text-success">MVR {{ today_revenue|default:0 }}</p>
+                            </div>
+                        </div>
+                        
+                        <!-- User profile -->
+                        <div class="flex items-center space-x-3">
+                            <div class="text-right">
+                                <p class="text-sm font-semibold text-gray-900">{{ request.user.first_name }} {{ request.user.last_name }}</p>
+                                <p class="text-xs text-gray-500">{{ request.user.email }}</p>
+                            </div>
+                            <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-white text-sm"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Enhanced Page Content -->
+            <main class="flex-1 overflow-y-auto p-6 bg-gradient-to-br from-gray-50 to-white no-overlay">
+                {% if messages %}
+                    <div class="mb-6 space-y-3">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} p-4 rounded-xl shadow-lg animate-slide-up {% if message.tags == 'success' %}bg-gradient-to-r from-green-50 to-emerald-50 text-green-800 border border-green-200{% elif message.tags == 'error' %}bg-gradient-to-r from-red-50 to-pink-50 text-red-800 border border-red-200{% elif message.tags == 'warning' %}bg-gradient-to-r from-yellow-50 to-orange-50 text-yellow-800 border border-yellow-200{% else %}bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-800 border border-blue-200{% endif %}">
+                                <div class="flex items-center">
+                                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-triangle{% elif message.tags == 'warning' %}exclamation-circle{% else %}info-circle{% endif %} mr-3"></i>
+                                    {{ message }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
                 
-                // Fix links
-                const links = document.querySelectorAll('a');
-                links.forEach(link => {
-                    link.style.visibility = 'visible';
-                    link.style.opacity = '1';
-                    link.style.pointerEvents = 'auto';
-                    link.style.zIndex = '1000';
-                    link.style.position = 'relative';
-                });
-                
-                // Fix form elements
-                const inputs = document.querySelectorAll('input, select, textarea');
-                inputs.forEach(input => {
-                    input.style.visibility = 'visible';
-                    input.style.opacity = '1';
-                    input.style.backgroundColor = 'white';
-                    input.style.color = '#111827';
-                    input.style.border = '1px solid #d1d5db';
-                    input.style.pointerEvents = 'auto';
-                });
-                
-                // Fix cards and containers
-                const cards = document.querySelectorAll('.bg-white, .card, .panel, .stat-card');
-                cards.forEach(card => {
-                    card.style.backgroundColor = 'white';
-                    card.style.color = '#111827';
-                    card.style.visibility = 'visible';
-                    card.style.opacity = '1';
-                });
-                
-                // Ensure main content is clickable
-                const mainContent = document.querySelector('.lg\\:ml-64');
-                if (mainContent) {
-                    mainContent.style.position = 'relative';
-                    mainContent.style.zIndex = '10';
-                    mainContent.style.backgroundColor = '#f9fafb';
-                    mainContent.style.pointerEvents = 'auto';
+                {% block content %}
+                {% endblock %}
+            </main>
+        </div>
+    </div>
+    
+    <script>
+        // Enhanced JavaScript for better UX
+        document.addEventListener('DOMContentLoaded', function() {
+            // Force visibility for all interactive elements
+            const interactiveElements = document.querySelectorAll('button, a, input, select, textarea');
+            interactiveElements.forEach(element => {
+                element.style.opacity = '1';
+                element.style.visibility = 'visible';
+                element.style.pointerEvents = 'auto';
+                element.style.zIndex = 'auto';
+            });
+            
+            // Remove any potential dark overlays
+            const allElements = document.querySelectorAll('*');
+            allElements.forEach(element => {
+                const computedStyle = window.getComputedStyle(element);
+                if (computedStyle.backgroundColor === 'rgba(0, 0, 0, 0.5)' || 
+                    computedStyle.backgroundColor === 'rgba(0, 0, 0, 0.3)' ||
+                    computedStyle.backgroundColor === 'rgba(0, 0, 0, 0.7)') {
+                    element.style.backgroundColor = 'transparent';
                 }
-            }
+                if (computedStyle.position === 'fixed' && computedStyle.zIndex > 1000) {
+                    element.style.display = 'none';
+                }
+            });
             
-            // Run fixes immediately
-            removeDarkOverlays();
-            forceElementVisibility();
-            
-            // Run again after short delays
-            setTimeout(() => {
-                removeDarkOverlays();
-                forceElementVisibility();
-            }, 100);
-            
-            setTimeout(() => {
-                removeDarkOverlays();
-                forceElementVisibility();
-            }, 500);
-            
-            setTimeout(() => {
-                removeDarkOverlays();
-                forceElementVisibility();
-            }, 1000);
-            
-            // Monitor for any new dark overlays
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.type === 'childList') {
-                        mutation.addedNodes.forEach(function(node) {
-                            if (node.nodeType === 1) { // Element node
-                                if (node.classList && (node.classList.contains('modal-backdrop') || 
-                                    node.classList.contains('overlay') || 
-                                    node.classList.contains('backdrop'))) {
-                                    console.log('Removing added overlay:', node);
-                                    node.remove();
-                                }
-                            }
-                        });
-                    }
+            // Add smooth scrolling
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
                 });
             });
             
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true
+            // Add loading states to buttons
+            document.querySelectorAll('button[type="submit"], a[href*="verify"], a[href*="approve"]').forEach(button => {
+                button.addEventListener('click', function() {
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>' + this.innerHTML;
+                    this.disabled = true;
+                });
             });
         });
         
-        // Also run when window loads
-        window.addEventListener('load', function() {
-            console.log('Window loaded - final UI fix');
-            
-            // Final cleanup
-            document.body.style.backgroundColor = '#f9fafb';
-            document.body.style.color = '#111827';
-            document.body.style.filter = 'none';
-            
-            // Force button visibility one more time
-            const buttons = document.querySelectorAll('button, [type="submit"], .btn, input[type="submit"]');
-            buttons.forEach(btn => {
-                btn.style.visibility = 'visible';
-                btn.style.opacity = '1';
-                btn.style.display = 'inline-block';
-                btn.style.backgroundColor = '#3b82f6';
-                btn.style.color = 'white';
-                btn.style.pointerEvents = 'auto';
-                btn.style.zIndex = '1000';
-            });
-        });
-        
-        // Emergency fix function that can be called from console
-        window.fixAdminUI = function() {
-            console.log('Emergency UI fix triggered');
-            
-            // Remove all potential overlays
-            const overlays = document.querySelectorAll('*');
-            overlays.forEach(el => {
-                const styles = window.getComputedStyle(el);
-                if (styles.backgroundColor === 'rgba(0, 0, 0, 0.5)' || 
-                    styles.backgroundColor === 'rgb(0, 0, 0)' ||
-                    styles.position === 'fixed' && styles.zIndex > 40) {
-                    if (!el.id || (el.id !== 'sidebar' && el.id !== 'mobileMenuBtn')) {
-                        el.style.display = 'none';
-                    }
+        // Auto-refresh dashboard every 30 seconds
+        if (window.location.pathname.includes('dashboard')) {
+            setInterval(() => {
+                // Only refresh if user is active
+                if (document.hasFocus()) {
+                    location.reload();
                 }
-            });
-            
-            // Force everything visible
-            document.body.style.backgroundColor = '#f9fafb';
-            document.body.style.filter = 'none';
-            
-            const allElements = document.querySelectorAll('button, a, input, select, textarea');
-            allElements.forEach(el => {
-                el.style.pointerEvents = 'auto';
-                el.style.visibility = 'visible';
-                el.style.opacity = '1';
-            });
-            
-            console.log('Emergency fix completed');
-        };
+            }, 30000);
+        }
     </script>
 </body>
 </html>
