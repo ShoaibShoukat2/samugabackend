@@ -23,20 +23,38 @@ class SpeedboatOperatorViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     def register(self, request):
         """Register as a speedboat operator"""
-        if hasattr(request.user, 'operator_profile'):
-            return Response({'error': 'User already registered as operator'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
-        
-        # Update user type
-        request.user.user_type = 'operator'
-        request.user.save()
-        
-        # Create operator profile
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(user=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            # Check if user is authenticated
+            if not request.user.is_authenticated:
+                return Response({'error': 'Authentication required'}, 
+                              status=status.HTTP_401_UNAUTHORIZED)
+            
+            # Check if user already has operator profile
+            if hasattr(request.user, 'operator_profile'):
+                return Response({'error': 'User already registered as operator'}, 
+                              status=status.HTTP_400_BAD_REQUEST)
+            
+            # Update user type
+            request.user.user_type = 'operator'
+            request.user.save()
+            
+            # Create operator profile
+            serializer = self.get_serializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save(user=request.user)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                # Log validation errors for debugging
+                print(f"❌ Operator registration validation errors: {serializer.errors}")
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            # Log the actual error for debugging
+            print(f"❌ Operator registration error: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response({'error': 'Internal server error during operator registration'}, 
+                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     @action(detail=True, methods=['get'])
     def dashboard(self, request, pk=None):
