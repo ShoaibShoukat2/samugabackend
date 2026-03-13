@@ -23,12 +23,13 @@ class RegisterSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['email', 'phone_number', 'password', 'first_name', 'last_name']
+        fields = ['email', 'phone_number', 'password', 'first_name', 'last_name', 'user_type']
     
     def create(self, validated_data):
         password = validated_data.pop('password', None)
         email = validated_data.get('email')
         phone_number = validated_data.get('phone_number')
+        user_type = validated_data.get('user_type', 'customer')  # Default to customer
         
         # Set username to email or phone_number
         if email:
