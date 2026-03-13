@@ -8,7 +8,7 @@ class UserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'phone_number', 'first_name', 'last_name', 'is_admin', 'profile_image', 'profile_image_url']
+        fields = ['id', 'username', 'email', 'phone_number', 'first_name', 'last_name', 'user_type', 'is_admin', 'profile_image', 'profile_image_url']
         read_only_fields = ['id', 'is_admin', 'profile_image_url']
     
     def get_profile_image_url(self, obj):
