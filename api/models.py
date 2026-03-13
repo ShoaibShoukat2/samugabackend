@@ -179,7 +179,10 @@ class Quote(models.Model):
     def save(self, *args, **kwargs):
         # Calculate commission amount
         if self.amount and self.commission_rate:
-            self.commission_amount = (self.amount * self.commission_rate) / Decimal('100')
+            # Ensure both values are Decimal to avoid float multiplication
+            amount_decimal = Decimal(str(self.amount))
+            rate_decimal = Decimal(str(self.commission_rate))
+            self.commission_amount = (amount_decimal * rate_decimal) / Decimal('100')
         super().save(*args, **kwargs)
     
     def __str__(self):
