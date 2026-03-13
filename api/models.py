@@ -136,6 +136,11 @@ class TripRequest(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+    @property
+    def quote(self):
+        """Return the first quote for backward compatibility"""
+        return self.quotes.first()
+    
     def __str__(self):
         return f"{self.trip_type} - {self.user.email} - {self.trip_date}"
 
