@@ -68,23 +68,52 @@ class AuthViewSet(viewsets.ViewSet):
             password = serializer.validated_data.get('password')
             
             user = None
-            if email and password:
-                user = authenticate(username=email, password=password)
+
+            if email:
+                # Try authenticate with username=email (standard Django way)
+                user = authenticate(request, username=email, password=password)
+                
                 if not user:
+                    # Fallback: look up user by email and check password directly
+                    # This handles cases where username != email
                     try:
                         user_obj = User.objects.get(email=email)
-                        if user_obj.check_password(password):
-                            user = user_obj
+                        print(f"🔍 User found: {user_obj.email} | username: {user_obj.username} | active: {user_obj.is_active} | has_password: {user_obj.has_usable_password()}")
+                        if password and user_obj.check_password(password):
+                            if user_obj.is_active:
+                                user = user_obj
+                            else:
+                                return Response({'error': 'Account is disabled. Contact support.'}, status=status.HTTP_401_UNAUTHORIZED)
+                        else:
+                            print(f"❌ Password check failed for {user_obj.email}")
+                            return Response({'error': 'Incorrect password. Please try again.'}, status=status.HTTP_401_UNAUTHORIZED)
                     except User.DoesNotExist:
-                        pass
+                        print(f"❌ No user found with email: {email}")
+                        return Response({'error': 'No account found with this email address.'}, status=status.HTTP_401_UNAUTHORIZED)
+
             elif phone_number:
                 try:
-                    user = User.objects.get(phone_number=phone_number)
+                    user_obj = User.objects.get(phone_number=phone_number)
+                    if password:
+                        if user_obj.check_password(password):
+                            user = user_obj
+                        else:
+                            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+                    else:
+                        # OTP-based login — just return user
+                        user = user_obj
                 except User.DoesNotExist:
-                    pass
+                    return Response({'error': 'No account found with this phone number'}, status=status.HTTP_401_UNAUTHORIZED)
             
             if user:
+                # Auto-fix: if user has an operator profile but wrong user_type, correct it
+                if user.user_type != 'operator' and hasattr(user, 'operator_profile'):
+                    print(f"🔧 Auto-fixing user_type for {user.email}: {user.user_type} → operator")
+                    user.user_type = 'operator'
+                    user.save()
+
                 refresh = RefreshToken.for_user(user)
+                print(f"✅ Login successful: {user.email} | type: {user.user_type}")
                 return Response({
                     'user': UserSerializer(user).data,
                     'tokens': {
@@ -92,6 +121,7 @@ class AuthViewSet(viewsets.ViewSet):
                         'access': str(refresh.access_token),
                     }
                 })
+
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     

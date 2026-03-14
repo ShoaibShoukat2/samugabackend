@@ -61,17 +61,26 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=False)
-    phone_number = serializers.CharField(required=False)
-    password = serializers.CharField(required=False, write_only=True)
+    email = serializers.EmailField(required=False, allow_blank=True)
+    phone_number = serializers.CharField(required=False, allow_blank=True)
+    password = serializers.CharField(required=False, write_only=True, allow_blank=True)
     
     def validate(self, data):
-        email = data.get('email')
-        phone_number = data.get('phone_number')
-        password = data.get('password')
+        email = data.get('email', '').strip()
+        phone_number = data.get('phone_number', '').strip()
+        password = data.get('password', '').strip()
         
         if not email and not phone_number:
             raise serializers.ValidationError("Email or phone number is required")
+        
+        if email and not password:
+            raise serializers.ValidationError("Password is required")
+        
+        # Clean empty strings to None
+        if not email:
+            data.pop('email', None)
+        if not phone_number:
+            data.pop('phone_number', None)
         
         return data
 
