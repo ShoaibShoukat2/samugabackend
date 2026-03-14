@@ -28,35 +28,35 @@ class AuthViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=['post'])
     def register(self, request):
-            try:
-                print(f"📥 Registration request data: {request.data}")
+        try:
+            print(f"📥 Registration request data: {request.data}")
 
-                serializer = RegisterSerializer(data=request.data)
-                if serializer.is_valid():
-                    print("✅ Serializer validation passed")
-                    user = serializer.save()
-                    print(f"✅ User created: {user.email}, type: {user.user_type}")
+            serializer = RegisterSerializer(data=request.data)
+            if serializer.is_valid():
+                print("✅ Serializer validation passed")
+                user = serializer.save()
+                print(f"✅ User created: {user.email}, type: {user.user_type}")
 
-                    refresh = RefreshToken.for_user(user)
-                    return Response({
-                        'user': UserSerializer(user).data,
-                        'tokens': {
-                            'refresh': str(refresh),
-                            'access': str(refresh.access_token),
-                        }
-                    }, status=status.HTTP_201_CREATED)
-                else:
-                    print(f"❌ Serializer validation failed: {serializer.errors}")
-                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-            except Exception as e:
-                print(f"❌ Registration error: {str(e)}")
-                import traceback
-                traceback.print_exc()
+                refresh = RefreshToken.for_user(user)
                 return Response({
-                    'error': 'Internal server error during registration',
-                    'detail': str(e)
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    'user': UserSerializer(user).data,
+                    'tokens': {
+                        'refresh': str(refresh),
+                        'access': str(refresh.access_token),
+                    }
+                }, status=status.HTTP_201_CREATED)
+            else:
+                print(f"❌ Serializer validation failed: {serializer.errors}")
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            print(f"❌ Registration error: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response({
+                'error': 'Internal server error during registration',
+                'detail': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     
     @action(detail=False, methods=['post'])

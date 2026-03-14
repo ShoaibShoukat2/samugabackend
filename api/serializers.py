@@ -25,11 +25,20 @@ class RegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = ['email', 'phone_number', 'password', 'first_name', 'last_name', 'user_type']
     
+    def validate_email(self, value):
+        if value and User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("An account with this email already exists.")
+        return value
+    
+    def validate_phone_number(self, value):
+        if value and User.objects.filter(phone_number=value).exists():
+            raise serializers.ValidationError("An account with this phone number already exists.")
+        return value
+    
     def create(self, validated_data):
         password = validated_data.pop('password', None)
         email = validated_data.get('email')
         phone_number = validated_data.get('phone_number')
-        user_type = validated_data.get('user_type', 'customer')  # Default to customer
         
         # Set username to email or phone_number
         if email:
@@ -37,8 +46,11 @@ class RegisterSerializer(serializers.ModelSerializer):
         elif phone_number:
             validated_data['username'] = phone_number
         else:
-            # Generate random username if neither provided
             validated_data['username'] = f"user_{random.randint(100000, 999999)}"
+        
+        # Check username uniqueness too
+        if User.objects.filter(username=validated_data['username']).exists():
+            raise serializers.ValidationError({"email": "An account with this email already exists."})
         
         user = User(**validated_data)
         if password:
