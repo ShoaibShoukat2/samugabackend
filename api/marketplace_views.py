@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.db import models
 from datetime import timedelta
 from .models import (SpeedboatOperator, Speedboat, Quote, TripRequest, 
                     OperatorSubscription, OperatorRating, PlatformRevenue)
@@ -22,14 +23,12 @@ class SpeedboatOperatorViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['post'])
     def register(self, request):
-        """Register as a speedboat operator"""
+        """Register as a speedboat operator — first month is FREE automatically"""
         try:
-            # Check if user is authenticated
             if not request.user.is_authenticated:
                 return Response({'error': 'Authentication required'}, 
                               status=status.HTTP_401_UNAUTHORIZED)
             
-            # Check if user already has operator profile
             if hasattr(request.user, 'operator_profile'):
                 return Response({'error': 'User already registered as operator'}, 
                               status=status.HTTP_400_BAD_REQUEST)
@@ -41,15 +40,44 @@ class SpeedboatOperatorViewSet(viewsets.ModelViewSet):
             # Create operator profile
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid():
-                serializer.save(user=request.user)
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
+                operator = serializer.save(user=request.user)
+
+                # Grant FREE first month subscription automatically
+                from datetime import date
+                from dateutil.relativedelta import relativedelta
+                today = date.today()
+                free_end = today + relativedelta(months=1) - timezone.timedelta(days=1)
+
+                OperatorSubscription.objects.create(
+                    operator=operator,
+                    plan='basic',
+                    amount=0,  # Free
+                    start_date=today,
+                    end_date=free_end,
+                    payment_status='paid',
+                    paid_at=timezone.now(),
+                )
+
+                # Mark operator subscription as active
+                operator.subscription_status = 'active'
+                operator.subscription_expires_at = timezone.datetime.combine(
+                    free_end, timezone.datetime.min.time()
+                ).replace(tzinfo=timezone.get_current_timezone())
+                operator.save()
+
+                print(f"✅ Free 1-month subscription granted to {operator.company_name} until {free_end}")
+
+                return Response({
+                    **serializer.data,
+                    'free_trial': True,
+                    'trial_ends': str(free_end),
+                    'message': 'Welcome! Your first month is FREE. Subscription starts from month 2.'
+                }, status=status.HTTP_201_CREATED)
             else:
-                # Log validation errors for debugging
                 print(f"❌ Operator registration validation errors: {serializer.errors}")
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
                 
         except Exception as e:
-            # Log the actual error for debugging
             print(f"❌ Operator registration error: {str(e)}")
             import traceback
             traceback.print_exc()
@@ -97,7 +125,7 @@ class SpeedboatOperatorViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['get'])
     def trip_requests(self, request, pk=None):
-        """Get ALL trip requests for operator - Uber style (pending + quoted shown to all)"""
+        """Get trip requests matching operator's boat capacity — Uber style"""
         try:
             operator = self.get_object()
 
@@ -115,10 +143,16 @@ class SpeedboatOperatorViewSet(viewsets.ModelViewSet):
 
             service_islands = [island.strip().lower() for island in operator.service_islands.split(',')]
 
-            # Show pending AND quoted requests (Uber style - all operators see all requests)
-            # Only hide accepted/confirmed/completed/cancelled
+            # Get max capacity across all operator's active boats
+            max_capacity = operator.boats.filter(is_active=True).aggregate(
+                max_cap=models.Max('capacity')
+            )['max_cap'] or 0
+
+            # Show pending AND quoted requests (Uber style)
+            # Filter: only show requests where passenger_count <= operator's max boat capacity
             available_requests = TripRequest.objects.filter(
-                status__in=['pending', 'quoted']
+                status__in=['pending', 'quoted'],
+                passenger_count__lte=max_capacity if max_capacity > 0 else 9999,
             ).prefetch_related('quotes__operator').order_by('-created_at')
 
             result = []
