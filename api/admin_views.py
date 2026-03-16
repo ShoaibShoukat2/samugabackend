@@ -193,9 +193,13 @@ def verify_payment(request, payment_id):
             import random
             booking_code = f"ST{random.randint(100000, 999999)}"
             
+            # Find the accepted quote (operator's quote that was accepted)
+            accepted_quote = trip.quotes.filter(status='accepted').first()
+            
             booking = Booking.objects.create(
                 trip_request=trip,
-                booking_code=booking_code
+                booking_code=booking_code,
+                selected_quote=accepted_quote,
             )
             
             # Generate QR code
@@ -213,13 +217,24 @@ def verify_payment(request, payment_id):
             buffer.seek(0)
             booking.qr_code.save(f'{booking_code}.png', File(buffer), save=True)
             
-            # Notify user
+            # Notify customer
             Notification.objects.create(
                 user=trip.user,
                 title='Booking Confirmed',
                 message=f'Your booking is confirmed! Booking code: {booking_code}',
                 trip_request=trip
             )
+            
+            # Notify the operator whose quote was accepted
+            if accepted_quote and accepted_quote.operator:
+                Notification.objects.create(
+                    user=accepted_quote.operator.user,
+                    title='Payment Confirmed — Trip Ready',
+                    message=f'Payment verified for your {trip.trip_type} trip on {trip.trip_date}. '
+                            f'Customer: {trip.user.first_name} {trip.user.last_name}. '
+                            f'Booking code: {booking_code}',
+                    trip_request=trip
+                )
             
             messages.success(request, f'Payment approved and booking {booking_code} created!')
             return redirect('admin_payments')

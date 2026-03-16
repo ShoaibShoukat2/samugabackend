@@ -175,12 +175,15 @@ class SpeedboatOperatorViewSet(viewsets.ModelViewSet):
                 status__in=['pending', 'quoted']
             ).prefetch_related('quotes__operator').select_related('user').order_by('-created_at')
 
-            # 2. My accepted/confirmed/completed trips (where my quote was accepted)
+            # 2. My accepted/confirmed/completed trips
+            # Find trips where this operator has an accepted quote OR is the selected_quote operator
             my_accepted_trips = TripRequest.objects.filter(
                 status__in=['accepted', 'payment_pending', 'confirmed', 'completed'],
                 quotes__operator=operator,
                 quotes__status='accepted'
-            ).prefetch_related('quotes__operator', 'quotes__boat').select_related('user').distinct().order_by('-updated_at')
+            ).prefetch_related(
+                'quotes__operator', 'quotes__boat', 'payment', 'booking'
+            ).select_related('user').distinct().order_by('-updated_at')
 
             result = []
 
@@ -227,6 +230,30 @@ class SpeedboatOperatorViewSet(viewsets.ModelViewSet):
                         'currency': my_quote.currency,
                         'status': my_quote.status,
                     }
+
+                # Add payment info
+                try:
+                    p = trip.payment
+                    trip_data['payment_info'] = {
+                        'status': p.status,
+                        'amount': float(p.amount),
+                        'currency': p.currency,
+                        'method': p.payment_method,
+                        'submitted_at': p.created_at.isoformat() if p.created_at else None,
+                        'verified_at': p.verified_at.isoformat() if p.verified_at else None,
+                    }
+                except Exception:
+                    trip_data['payment_info'] = None
+
+                # Add booking info
+                try:
+                    b = trip.booking
+                    trip_data['booking_info'] = {
+                        'booking_code': b.booking_code,
+                        'created_at': b.created_at.isoformat() if b.created_at else None,
+                    }
+                except Exception:
+                    trip_data['booking_info'] = None
 
                 result.append(trip_data)
 
