@@ -72,70 +72,82 @@ def admin_dashboard(request):
 def accepted_requests(request):
     """Shows all trips that have been accepted by an operator — full assignment details"""
     status_filter = request.GET.get('status', 'all')
+    try:
+        # Step 1: fetch trips — only select_related('user'), no prefetch
+        qs = TripRequest.objects.filter(
+            status__in=['accepted', 'payment_pending', 'confirmed', 'completed']
+        ).select_related('user').order_by('-updated_at')
 
-    trips = TripRequest.objects.filter(
-        status__in=['accepted', 'payment_pending', 'confirmed', 'completed']
-    ).select_related('user').prefetch_related(
-        'quotes__operator',
-        'quotes__boat',
-    ).order_by('-updated_at')
+        if status_filter != 'all':
+            qs = qs.filter(status=status_filter)
 
-    if status_filter != 'all':
-        trips = trips.filter(status=status_filter)
+        trips = list(qs)
+        trip_ids = [t.id for t in trips]
 
-    # Build safe trip_data list — avoid UUID issues by doing Python-level filtering
-    trip_data = []
-    for trip in trips:
+        # Step 2: fetch accepted quotes separately — select_related only on direct FK fields
+        accepted_quotes_qs = Quote.objects.filter(
+            trip_request_id__in=trip_ids,
+            status='accepted'
+        ).select_related('operator', 'boat')
+        aq_map = {str(q.trip_request_id): q for q in accepted_quotes_qs}
+
+        # Step 3: fetch payments separately
         try:
-            accepted_q = None
-            for q in trip.quotes.all():
-                if q.status == 'accepted':
-                    accepted_q = q
-                    break
+            from .models import Payment as P2
+            payments_qs = P2.objects.filter(trip_request_id__in=trip_ids)
+            pay_map = {str(p.trip_request_id): p for p in payments_qs}
+        except Exception:
+            pay_map = {}
 
-            # Safely get payment and booking
-            try:
-                payment = trip.payment
-            except Exception:
-                payment = None
+        # Step 4: fetch bookings separately
+        try:
+            bookings_qs = Booking.objects.filter(trip_request_id__in=trip_ids)
+            book_map = {str(b.trip_request_id): b for b in bookings_qs}
+        except Exception:
+            book_map = {}
 
-            try:
-                booking = trip.booking
-            except Exception:
-                booking = None
-
+        trip_data = []
+        for trip in trips:
+            tid = str(trip.id)
             trip_data.append({
                 'trip': trip,
-                'accepted_quote': accepted_q,
-                'payment': payment,
-                'booking': booking,
+                'accepted_quote': aq_map.get(tid),
+                'payment': pay_map.get(tid),
+                'booking': book_map.get(tid),
             })
-        except Exception as e:
-            print(f"⚠️ Skipping trip {trip.id}: {e}")
-            continue
 
-    # Count stats in Python (avoid template filter issues)
-    stats = {
-        'total': len(trip_data),
-        'awaiting_payment': sum(1 for d in trip_data if d['trip'].status == 'accepted'),
-        'payment_pending': sum(1 for d in trip_data if d['trip'].status == 'payment_pending'),
-        'confirmed': sum(1 for d in trip_data if d['trip'].status == 'confirmed'),
-        'completed': sum(1 for d in trip_data if d['trip'].status == 'completed'),
-    }
+        stats = {
+            'total': len(trip_data),
+            'awaiting_payment': sum(1 for d in trip_data if d['trip'].status == 'accepted'),
+            'payment_pending': sum(1 for d in trip_data if d['trip'].status == 'payment_pending'),
+            'confirmed': sum(1 for d in trip_data if d['trip'].status == 'confirmed'),
+            'completed': sum(1 for d in trip_data if d['trip'].status == 'completed'),
+        }
 
-    context = {
-        'trip_data': trip_data,
-        'stats': stats,
-        'status_filter': status_filter,
-        'filter_tabs': [
-            ('all', 'All Assigned', 'bg-blue-600'),
-            ('accepted', 'Awaiting Payment', 'bg-orange-500'),
-            ('payment_pending', 'Payment Pending', 'bg-purple-600'),
-            ('confirmed', 'Confirmed', 'bg-green-600'),
-            ('completed', 'Completed', 'bg-gray-600'),
-        ],
-    }
-    return render(request, 'admin_panel/accepted_requests.html', context)
+        context = {
+            'trip_data': trip_data,
+            'stats': stats,
+            'status_filter': status_filter,
+            'filter_tabs': [
+                ('all', 'All Assigned', 'bg-blue-600'),
+                ('accepted', 'Awaiting Payment', 'bg-orange-500'),
+                ('payment_pending', 'Payment Pending', 'bg-purple-600'),
+                ('confirmed', 'Confirmed', 'bg-green-600'),
+                ('completed', 'Completed', 'bg-gray-600'),
+            ],
+        }
+        return render(request, 'admin_panel/accepted_requests.html', context)
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return render(request, 'admin_panel/accepted_requests.html', {
+            'trip_data': [],
+            'error': str(e),
+            'stats': {'total': 0, 'awaiting_payment': 0, 'payment_pending': 0, 'confirmed': 0, 'completed': 0},
+            'status_filter': status_filter,
+            'filter_tabs': [('all', 'All Assigned', 'bg-blue-600')],
+        })
 
 
 @login_required

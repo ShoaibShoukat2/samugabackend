@@ -5,6 +5,11 @@
 {% block page_subtitle %}Trips assigned to operators — full assignment details{% endblock %}
 
 {% block content %}
+{% if error %}
+<div class="mb-4 bg-red-50 border border-red-300 rounded-xl p-4 text-red-700 text-sm">
+    <strong>Error:</strong> {{ error }}
+</div>
+{% endif %}
 <!-- Filter Tabs -->
 <div class="mb-4 sm:mb-6 flex flex-wrap gap-2 overflow-x-auto">
     {% for s, label, color in filter_tabs %}
