@@ -125,7 +125,8 @@ class SpeedboatOperatorViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['get'])
     def trip_requests(self, request, pk=None):
-        """Get trip requests matching operator's boat capacity — Uber style"""
+        """Uber-style: ALL pending/quoted trip requests shown to every verified operator.
+        Operator sees all requests and can quote on any of them."""
         try:
             operator = self.get_object()
 
@@ -141,32 +142,17 @@ class SpeedboatOperatorViewSet(viewsets.ModelViewSet):
                     'detail': f'Your subscription status is: {operator.subscription_status}. Please activate your subscription.'
                 }, status=status.HTTP_403_FORBIDDEN)
 
-            service_islands = [island.strip().lower() for island in operator.service_islands.split(',')]
-
-            # Get max capacity across all operator's active boats
-            max_capacity = operator.boats.filter(is_active=True).aggregate(
-                max_cap=models.Max('capacity')
-            )['max_cap'] or 0
-
-            # Show pending AND quoted requests (Uber style)
-            # Filter: only show requests where passenger_count <= operator's max boat capacity
+            # Uber-style: show ALL pending + quoted requests to every operator
+            # No island filtering, no capacity filtering — operator decides
             available_requests = TripRequest.objects.filter(
-                status__in=['pending', 'quoted'],
-                passenger_count__lte=max_capacity if max_capacity > 0 else 9999,
-            ).prefetch_related('quotes__operator').order_by('-created_at')
+                status__in=['pending', 'quoted']
+            ).prefetch_related('quotes__operator').select_related('user').order_by('-created_at')
 
             result = []
             for trip in available_requests:
-                pickup_lower = trip.pickup_location.lower()
-                dest_lower = trip.destination.lower()
-
-                serves = any(island in pickup_lower or island in dest_lower for island in service_islands)
-                if not serves:
-                    continue
-
                 # Check if THIS operator already quoted
                 my_quote = trip.quotes.filter(operator=operator).first()
-                # Check if trip is already taken (another operator's quote accepted)
+                # Check if trip is already accepted by any operator
                 accepted_quote = trip.quotes.filter(status='accepted').first()
 
                 from .serializers import TripRequestSerializer
