@@ -59,6 +59,10 @@
                     <i class="fas fa-map-marked-alt mr-3 text-green-400"></i>
                     <span>Trip Requests</span>
                 </a>
+                <a href="/api/admin-panel/accepted-requests/" class="flex items-center px-4 py-3 {% if 'accepted-requests' in request.path %}bg-gray-700{% else %}hover:bg-gray-700{% endif %} rounded-xl transition-all">
+                    <i class="fas fa-handshake mr-3 text-orange-400"></i>
+                    <span>Accepted / Assigned</span>
+                </a>
                 <a href="/api/admin-panel/payments/" class="flex items-center px-4 py-3 {% if 'payments' in request.path %}bg-gray-700{% else %}hover:bg-gray-700{% endif %} rounded-xl transition-all">
                     <i class="fas fa-credit-card mr-3 text-yellow-400"></i>
                     <span>Payments</span>
@@ -118,6 +122,10 @@
                 <a href="/api/admin-panel/trip-requests/" class="flex items-center px-4 py-3 {% if 'trip-requests' in request.path %}bg-gray-700{% else %}hover:bg-gray-700{% endif %} rounded-xl transition-all">
                     <i class="fas fa-map-marked-alt mr-3 text-green-400"></i>
                     <span>Trip Requests</span>
+                </a>
+                <a href="/api/admin-panel/accepted-requests/" class="flex items-center px-4 py-3 {% if 'accepted-requests' in request.path %}bg-gray-700{% else %}hover:bg-gray-700{% endif %} rounded-xl transition-all">
+                    <i class="fas fa-handshake mr-3 text-orange-400"></i>
+                    <span>Accepted / Assigned</span>
                 </a>
                 <a href="/api/admin-panel/payments/" class="flex items-center px-4 py-3 {% if 'payments' in request.path %}bg-gray-700{% else %}hover:bg-gray-700{% endif %} rounded-xl transition-all">
                     <i class="fas fa-credit-card mr-3 text-yellow-400"></i>

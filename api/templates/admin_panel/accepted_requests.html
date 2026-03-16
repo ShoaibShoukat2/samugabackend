@@ -1,0 +1,201 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Accepted Requests{% endblock %}
+{% block page_title %}Accepted Requests{% endblock %}
+{% block page_subtitle %}Trips assigned to operators — full assignment details{% endblock %}
+
+{% block content %}
+<!-- Filter Tabs -->
+<div class="mb-4 sm:mb-6 flex flex-wrap gap-2 overflow-x-auto">
+    {% for s, label, color in filter_tabs %}
+    <a href="?status={{ s }}" class="px-3 sm:px-4 py-2 text-sm rounded-lg {% if status_filter == s %}{{ color }} text-white{% else %}bg-white text-gray-700 hover:bg-gray-50{% endif %} transition whitespace-nowrap">
+        {{ label }}
+    </a>
+    {% endfor %}
+</div>
+
+<!-- Summary Stats -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+    <div class="bg-orange-50 border border-orange-200 rounded-xl p-4 text-center">
+        <div class="text-2xl font-bold text-orange-600">{{ trip_data|length }}</div>
+        <div class="text-xs text-orange-500 mt-1">Total Assigned</div>
+    </div>
+    <div class="bg-purple-50 border border-purple-200 rounded-xl p-4 text-center">
+        <div class="text-2xl font-bold text-purple-600">
+            {% with count=0 %}
+            {% for item in trip_data %}{% if item.trip.status == 'payment_pending' %}{% with count=count|add:1 %}{% endwith %}{% endif %}{% endfor %}
+            {{ trip_data|length }}
+            {% endwith %}
+        </div>
+        <div class="text-xs text-purple-500 mt-1">Payment Pending</div>
+    </div>
+    <div class="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+        <div class="text-2xl font-bold text-green-600">
+            {% for item in trip_data %}{% if item.trip.status == 'confirmed' %}✓{% endif %}{% endfor %}
+        </div>
+        <div class="text-xs text-green-500 mt-1">Confirmed</div>
+    </div>
+    <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">
+        <div class="text-2xl font-bold text-gray-600">
+            {% for item in trip_data %}{% if item.trip.status == 'completed' %}✓{% endif %}{% endfor %}
+        </div>
+        <div class="text-xs text-gray-500 mt-1">Completed</div>
+    </div>
+</div>
+
+<!-- Assignments Table -->
+<div class="bg-white rounded-xl shadow-lg overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trip</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned Operator</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quote Amount</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Booking</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for item in trip_data %}
+                {% with trip=item.trip aq=item.accepted_quote %}
+                <tr class="hover:bg-gray-50">
+                    <!-- Customer -->
+                    <td class="px-4 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm">
+                                {{ trip.user.first_name|first|upper }}{{ trip.user.last_name|first|upper }}
+                            </div>
+                            <div>
+                                <div class="text-sm font-semibold text-gray-900">{{ trip.user.first_name }} {{ trip.user.last_name }}</div>
+                                <div class="text-xs text-gray-500">{{ trip.user.phone_number|default:trip.user.email }}</div>
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- Trip -->
+                    <td class="px-4 py-4">
+                        <div class="text-sm font-medium text-gray-900">
+                            {% if trip.trip_type == 'transfer' %}🚤
+                            {% elif trip.trip_type == 'snorkeling' %}🤿
+                            {% elif trip.trip_type == 'fishing' %}🎣
+                            {% elif trip.trip_type == 'sandbank' %}🏖️
+                            {% else %}🚤{% endif %}
+                            {{ trip.get_trip_type_display }}
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1">📍 {{ trip.pickup_location }}</div>
+                        <div class="text-xs text-gray-500">→ {{ trip.destination }}</div>
+                        <div class="text-xs text-gray-400 mt-1">📅 {{ trip.trip_date|date:"M d, Y" }} at {{ trip.trip_time }}</div>
+                        <div class="text-xs text-gray-400">👥 {{ trip.passenger_count }} pax</div>
+                    </td>
+
+                    <!-- Assigned Operator -->
+                    <td class="px-4 py-4">
+                        {% if aq and aq.operator %}
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-xs">
+                                {{ aq.operator.company_name|first|upper }}
+                            </div>
+                            <div>
+                                <div class="text-sm font-semibold text-green-700">{{ aq.operator.company_name }}</div>
+                                <div class="text-xs text-gray-500">📞 {{ aq.operator.phone_number|default:"—" }}</div>
+                                <div class="text-xs text-gray-400">{{ aq.operator.user.email|default:"—" }}</div>
+                                {% if aq.boat %}
+                                <div class="text-xs text-blue-500 mt-1">🚤 {{ aq.boat.name }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% else %}
+                        <span class="text-xs text-gray-400 italic">No operator assigned</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Quote Amount -->
+                    <td class="px-4 py-4">
+                        {% if aq %}
+                        <div class="text-sm font-bold text-gray-900">{{ aq.currency }} {{ aq.amount }}</div>
+                        {% if aq.commission_amount %}
+                        <div class="text-xs text-red-500">Commission: {{ aq.currency }} {{ aq.commission_amount }}</div>
+                        <div class="text-xs text-green-600 font-semibold">
+                            Operator earns: {{ aq.currency }}
+                            {% widthratio aq.amount 1 1 as raw_amount %}
+                            {{ aq.amount }}
+                        </div>
+                        {% endif %}
+                        {% if aq.pickup_time %}
+                        <div class="text-xs text-gray-400 mt-1">🕐 Pickup: {{ aq.pickup_time }}</div>
+                        {% endif %}
+                        {% if aq.notes %}
+                        <div class="text-xs text-gray-400 mt-1 italic">{{ aq.notes|truncatechars:40 }}</div>
+                        {% endif %}
+                        {% else %}
+                        <span class="text-xs text-gray-400">—</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Payment -->
+                    <td class="px-4 py-4">
+                        {% if trip.payment %}
+                        <div class="text-sm font-semibold text-gray-900">{{ trip.payment.currency }} {{ trip.payment.amount }}</div>
+                        <div class="text-xs text-gray-500">{{ trip.payment.payment_method|upper }}</div>
+                        <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-semibold
+                            {% if trip.payment.status == 'verified' %}bg-green-100 text-green-700
+                            {% elif trip.payment.status == 'pending' %}bg-yellow-100 text-yellow-700
+                            {% else %}bg-red-100 text-red-700{% endif %}">
+                            {{ trip.payment.status|upper }}
+                        </span>
+                        {% if trip.payment.status == 'pending' %}
+                        <div class="mt-2">
+                            <a href="{% url 'admin_payments' %}" class="text-xs bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-700">
+                                Verify →
+                            </a>
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <span class="text-xs text-gray-400">No payment yet</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Booking -->
+                    <td class="px-4 py-4">
+                        {% if trip.booking %}
+                        <div class="text-sm font-bold text-blue-700 tracking-wider">{{ trip.booking.booking_code }}</div>
+                        <div class="text-xs text-gray-400 mt-1">{{ trip.booking.created_at|date:"M d, Y" }}</div>
+                        {% else %}
+                        <span class="text-xs text-gray-400">Not generated</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Status -->
+                    <td class="px-4 py-4 whitespace-nowrap">
+                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
+                            {% if trip.status == 'accepted' %}bg-orange-100 text-orange-800
+                            {% elif trip.status == 'payment_pending' %}bg-purple-100 text-purple-800
+                            {% elif trip.status == 'confirmed' %}bg-green-100 text-green-800
+                            {% elif trip.status == 'completed' %}bg-gray-100 text-gray-600
+                            {% else %}bg-blue-100 text-blue-800{% endif %}">
+                            {% if trip.status == 'accepted' %}⏳ Awaiting Payment
+                            {% elif trip.status == 'payment_pending' %}💳 Payment Submitted
+                            {% elif trip.status == 'confirmed' %}✅ Confirmed
+                            {% elif trip.status == 'completed' %}✔️ Completed
+                            {% else %}{{ trip.status|upper }}{% endif %}
+                        </span>
+                        <div class="text-xs text-gray-400 mt-1">{{ trip.updated_at|date:"M d, H:i" }}</div>
+                    </td>
+                </tr>
+                {% endwith %}
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                        <div class="text-4xl mb-3">📋</div>
+                        <div class="text-sm">No accepted requests found</div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

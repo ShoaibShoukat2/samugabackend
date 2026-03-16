@@ -12,6 +12,7 @@ from .auth_views import admin_login_view, admin_logout_view
 from .admin_views import (
     admin_dashboard, trip_requests_list, send_quote_view, payments_list,
     verify_payment, bookings_list, support_messages, send_support_reply, users_list,
+    accepted_requests,
     # Marketplace views
     operators_list, operator_detail, verify_operator, subscriptions_list,
     verify_subscription, marketplace_quotes, revenue_dashboard, platform_settings
@@ -46,6 +47,7 @@ urlpatterns = [
     path('admin-panel/logout/', admin_logout_view, name='admin_logout'),
     path('admin-panel/dashboard/', admin_dashboard, name='admin_dashboard'),
     path('admin-panel/trip-requests/', trip_requests_list, name='admin_trip_requests'),
+    path('admin-panel/accepted-requests/', accepted_requests, name='admin_accepted_requests'),
     path('admin-panel/send-quote/<uuid:trip_id>/', send_quote_view, name='admin_send_quote'),
     path('admin-panel/payments/', payments_list, name='admin_payments'),
     path('admin-panel/verify-payment/<uuid:payment_id>/', verify_payment, name='admin_verify_payment'),

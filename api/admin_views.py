@@ -69,7 +69,45 @@ def admin_dashboard(request):
 
 @login_required
 @user_passes_test(is_admin)
-def trip_requests_list(request):
+def accepted_requests(request):
+    """Shows all trips that have been accepted by an operator — full assignment details"""
+    trips = TripRequest.objects.filter(
+        status__in=['accepted', 'payment_pending', 'confirmed', 'completed']
+    ).select_related('user').prefetch_related(
+        'quotes__operator__user',
+        'quotes__boat',
+        'payment',
+        'booking',
+    ).order_by('-updated_at')
+
+    status_filter = request.GET.get('status', 'all')
+    if status_filter != 'all':
+        trips = trips.filter(status=status_filter)
+
+    # Attach accepted quote to each trip for easy template access
+    trip_data = []
+    for trip in trips:
+        accepted_q = trip.quotes.filter(status='accepted').first()
+        trip_data.append({
+            'trip': trip,
+            'accepted_quote': accepted_q,
+        })
+
+    context = {
+        'trip_data': trip_data,
+        'status_filter': status_filter,
+        'filter_tabs': [
+            ('all', 'All Assigned', 'bg-blue-600'),
+            ('accepted', 'Awaiting Payment', 'bg-orange-500'),
+            ('payment_pending', 'Payment Pending', 'bg-purple-600'),
+            ('confirmed', 'Confirmed', 'bg-green-600'),
+            ('completed', 'Completed', 'bg-gray-600'),
+        ],
+    }
+    return render(request, 'admin_panel/accepted_requests.html', context)
+
+
+
     status_filter = request.GET.get('status', 'all')
     
     trips = TripRequest.objects.select_related('user').prefetch_related(
