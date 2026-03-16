@@ -161,14 +161,23 @@ def trip_requests_list(request):
         trips = list(qs)
         trip_ids = [t.id for t in trips]
 
-        # Fetch quotes separately — avoids UUID traversal crash from prefetch_related
-        quotes_qs = Quote.objects.filter(
+        # Fetch quotes as plain dicts — zero ORM traversal in template
+        quotes_raw = Quote.objects.filter(
             trip_request_id__in=trip_ids
-        ).select_related('operator')
+        ).values(
+            'id', 'trip_request_id', 'status', 'amount', 'currency',
+            'operator__company_name', 'operator__phone_number',
+        )
         quotes_map: dict = {}
-        for q in quotes_qs:
-            tid = str(q.trip_request_id)
-            quotes_map.setdefault(tid, []).append(q)
+        for q in quotes_raw:
+            tid = str(q['trip_request_id'])
+            quotes_map.setdefault(tid, []).append({
+                'status': q['status'],
+                'amount': q['amount'],
+                'currency': q['currency'],
+                'operator_name': q['operator__company_name'] or '',
+                'operator_phone': q['operator__phone_number'] or '',
+            })
 
         for trip in trips:
             trip.trip_quotes = quotes_map.get(str(trip.id), [])
