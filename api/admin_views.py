@@ -154,29 +154,45 @@ def accepted_requests(request):
 @user_passes_test(is_admin)
 def trip_requests_list(request):
     status_filter = request.GET.get('status', 'all')
-    
-    trips = TripRequest.objects.select_related('user').prefetch_related(
-        'quotes__operator'
-    ).order_by('-created_at')
-    
-    if status_filter != 'all':
-        trips = trips.filter(status=status_filter)
-    
-    context = {
-        'trips': trips,
-        'status_filter': status_filter,
-        'filter_tabs': [
-            ('all', 'All', 'bg-blue-600'),
-            ('pending', 'Pending', 'bg-yellow-600'),
-            ('quoted', 'Quoted', 'bg-blue-500'),
-            ('accepted', 'Accepted', 'bg-orange-500'),
-            ('payment_pending', 'Payment Pending', 'bg-purple-600'),
-            ('confirmed', 'Confirmed', 'bg-green-600'),
-            ('completed', 'Completed', 'bg-gray-600'),
-        ],
-    }
-    
-    return render(request, 'admin_panel/trip_requests.html', context)
+    try:
+        qs = TripRequest.objects.select_related('user').order_by('-created_at')
+        if status_filter != 'all':
+            qs = qs.filter(status=status_filter)
+        trips = list(qs)
+        trip_ids = [t.id for t in trips]
+
+        # Fetch quotes separately — avoids UUID traversal crash from prefetch_related
+        quotes_qs = Quote.objects.filter(
+            trip_request_id__in=trip_ids
+        ).select_related('operator')
+        quotes_map: dict = {}
+        for q in quotes_qs:
+            tid = str(q.trip_request_id)
+            quotes_map.setdefault(tid, []).append(q)
+
+        for trip in trips:
+            trip._prefetched_quotes = quotes_map.get(str(trip.id), [])
+
+        context = {
+            'trips': trips,
+            'status_filter': status_filter,
+            'filter_tabs': [
+                ('all', 'All', 'bg-blue-600'),
+                ('pending', 'Pending', 'bg-yellow-600'),
+                ('quoted', 'Quoted', 'bg-blue-500'),
+                ('accepted', 'Accepted', 'bg-orange-500'),
+                ('payment_pending', 'Payment Pending', 'bg-purple-600'),
+                ('confirmed', 'Confirmed', 'bg-green-600'),
+                ('completed', 'Completed', 'bg-gray-600'),
+            ],
+        }
+        return render(request, 'admin_panel/trip_requests.html', context)
+    except Exception as e:
+        import traceback; traceback.print_exc()
+        return render(request, 'admin_panel/trip_requests.html', {
+            'trips': [], 'error': str(e), 'status_filter': status_filter,
+            'filter_tabs': [('all', 'All', 'bg-blue-600')],
+        })
 
 @login_required
 @user_passes_test(is_admin)

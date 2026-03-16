@@ -5,6 +5,11 @@
 {% block page_subtitle %}Manage customer trip requests{% endblock %}
 
 {% block content %}
+{% if error %}
+<div class="mb-4 bg-red-50 border border-red-300 rounded-xl p-4 text-red-700 text-sm">
+    <strong>Error:</strong> {{ error }}
+</div>
+{% endif %}
 <!-- Filter Tabs -->
 <div class="mb-4 sm:mb-6 flex flex-wrap gap-2 overflow-x-auto">
     {% for s, label, color in filter_tabs %}
@@ -31,7 +36,6 @@
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 {% for trip in trips %}
-                {% with accepted_quote=trip.quotes.all|dictsort:"status" %}
                 <tr class="hover:bg-gray-50">
                     <td class="px-3 sm:px-6 py-4">
                         <div class="text-xs sm:text-sm font-medium text-gray-900">{{ trip.user.first_name }} {{ trip.user.last_name }}</div>
@@ -51,7 +55,7 @@
                         <div class="text-xs text-gray-500">{{ trip.trip_time }}</div>
                     </td>
                     <td class="px-3 sm:px-6 py-4">
-                        {% for q in trip.quotes.all %}
+                        {% for q in trip._prefetched_quotes %}
                             {% if q.status == 'accepted' %}
                             <div class="flex items-center gap-2">
                                 <span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
@@ -62,12 +66,9 @@
                                 </div>
                             </div>
                             {% endif %}
-                        {% empty %}
-                            <span class="text-xs text-gray-400">—</span>
                         {% endfor %}
-                        {% comment %}Show all quotes count{% endcomment %}
-                        {% if trip.quotes.count > 0 %}
-                        <div class="text-xs text-gray-400 mt-1">{{ trip.quotes.count }} quote{{ trip.quotes.count|pluralize }}</div>
+                        {% if trip._prefetched_quotes %}
+                        <div class="text-xs text-gray-400 mt-1">{{ trip._prefetched_quotes|length }} quote{{ trip._prefetched_quotes|length|pluralize }}</div>
                         {% endif %}
                     </td>
                     <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
@@ -96,7 +97,6 @@
                         {% endif %}
                     </td>
                 </tr>
-                {% endwith %}
                 {% empty %}
                 <tr>
                     <td colspan="7" class="px-3 sm:px-6 py-8 text-center text-gray-500 text-sm">
