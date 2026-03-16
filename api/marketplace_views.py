@@ -126,7 +126,8 @@ class SpeedboatOperatorViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'])
     def trip_requests(self, request, pk=None):
         """Uber-style: ALL pending/quoted trip requests shown to every verified operator.
-        Operator sees all requests and can quote on any of them."""
+        Also returns this operator's accepted/confirmed trips so they can track their jobs.
+        First month is FREE — subscription check is lenient for new operators."""
         try:
             operator = self.get_object()
 
@@ -136,31 +137,64 @@ class SpeedboatOperatorViewSet(viewsets.ModelViewSet):
                     'detail': f'Your account status is: {operator.verification_status}. Please wait for admin approval.'
                 }, status=status.HTTP_403_FORBIDDEN)
 
+            # Auto-grant free trial if no subscription exists yet
             if operator.subscription_status != 'active':
-                return Response({
-                    'error': 'Subscription not active',
-                    'detail': f'Your subscription status is: {operator.subscription_status}. Please activate your subscription.'
-                }, status=status.HTTP_403_FORBIDDEN)
+                from datetime import date
+                days_since_registration = (date.today() - operator.created_at.date()).days
+                if days_since_registration <= 30:
+                    try:
+                        from dateutil.relativedelta import relativedelta
+                        today = date.today()
+                        free_end = operator.created_at.date() + relativedelta(months=1)
+                        OperatorSubscription.objects.get_or_create(
+                            operator=operator,
+                            defaults={
+                                'plan': 'basic',
+                                'amount': 0,
+                                'start_date': operator.created_at.date(),
+                                'end_date': free_end,
+                                'payment_status': 'paid',
+                                'paid_at': timezone.now(),
+                            }
+                        )
+                        operator.subscription_status = 'active'
+                        operator.save()
+                        print(f"✅ Auto-granted free trial to {operator.company_name}")
+                    except Exception as e:
+                        print(f"⚠️ Could not auto-grant trial: {e}")
+                else:
+                    return Response({
+                        'error': 'Subscription not active',
+                        'detail': 'Your free trial has ended. Please activate your subscription to access trip requests.'
+                    }, status=status.HTTP_403_FORBIDDEN)
 
-            # Uber-style: show ALL pending + quoted requests to every operator
-            # No island filtering, no capacity filtering — operator decides
+            from .serializers import TripRequestSerializer
+
+            # 1. Available: pending/quoted trips (not yet taken by someone else)
             available_requests = TripRequest.objects.filter(
                 status__in=['pending', 'quoted']
             ).prefetch_related('quotes__operator').select_related('user').order_by('-created_at')
 
+            # 2. My accepted/confirmed/completed trips (where my quote was accepted)
+            my_accepted_trips = TripRequest.objects.filter(
+                status__in=['accepted', 'payment_pending', 'confirmed', 'completed'],
+                quotes__operator=operator,
+                quotes__status='accepted'
+            ).prefetch_related('quotes__operator', 'quotes__boat').select_related('user').distinct().order_by('-updated_at')
+
             result = []
+
+            # Add available trips
             for trip in available_requests:
-                # Check if THIS operator already quoted
                 my_quote = trip.quotes.filter(operator=operator).first()
-                # Check if trip is already accepted by any operator
                 accepted_quote = trip.quotes.filter(status='accepted').first()
 
-                from .serializers import TripRequestSerializer
                 trip_data = TripRequestSerializer(trip).data
                 trip_data['my_quote'] = None
                 trip_data['is_taken'] = False
                 trip_data['taken_by'] = None
                 trip_data['total_quotes'] = trip.quotes.count()
+                trip_data['section'] = 'available'
 
                 if my_quote:
                     trip_data['my_quote'] = {
@@ -176,6 +210,26 @@ class SpeedboatOperatorViewSet(viewsets.ModelViewSet):
 
                 result.append(trip_data)
 
+            # Add my accepted/ongoing trips
+            for trip in my_accepted_trips:
+                my_quote = trip.quotes.filter(operator=operator, status='accepted').first()
+                trip_data = TripRequestSerializer(trip).data
+                trip_data['my_quote'] = None
+                trip_data['is_taken'] = False
+                trip_data['taken_by'] = operator.company_name
+                trip_data['total_quotes'] = trip.quotes.count()
+                trip_data['section'] = 'my_jobs'
+
+                if my_quote:
+                    trip_data['my_quote'] = {
+                        'id': str(my_quote.id),
+                        'amount': float(my_quote.amount),
+                        'currency': my_quote.currency,
+                        'status': my_quote.status,
+                    }
+
+                result.append(trip_data)
+
             return Response(result)
 
         except Exception as e:
@@ -184,6 +238,59 @@ class SpeedboatOperatorViewSet(viewsets.ModelViewSet):
             traceback.print_exc()
             return Response({'error': 'Internal server error', 'detail': str(e)},
                           status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['post'])
+    def complete_trip(self, request, pk=None):
+        """Operator marks a trip as completed after the job is done."""
+        try:
+            operator = self.get_object()
+
+            trip_id = request.data.get('trip_id')
+            if not trip_id:
+                return Response({'error': 'trip_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+            trip = get_object_or_404(TripRequest, id=trip_id)
+
+            # Verify this operator's quote was accepted for this trip
+            my_accepted_quote = trip.quotes.filter(operator=operator, status='accepted').first()
+            if not my_accepted_quote:
+                return Response({'error': 'You do not have an accepted quote for this trip'}, status=status.HTTP_403_FORBIDDEN)
+
+            if trip.status not in ['confirmed', 'accepted', 'payment_pending']:
+                return Response({'error': f'Trip cannot be completed from status: {trip.status}'}, status=status.HTTP_400_BAD_REQUEST)
+
+            trip.status = 'completed'
+            trip.save()
+
+            # Record platform revenue (commission)
+            from .models import PlatformRevenue
+            PlatformRevenue.objects.get_or_create(
+                booking=trip.booking if hasattr(trip, 'booking') else None,
+                defaults={
+                    'revenue_type': 'commission',
+                    'amount': my_accepted_quote.commission_amount or 0,
+                    'currency': my_accepted_quote.currency,
+                    'description': f'Commission from {operator.company_name} for trip {trip.id}',
+                }
+            )
+
+            # Notify customer
+            from .models import Notification
+            Notification.objects.create(
+                user=trip.user,
+                title='Trip Completed',
+                message=f'Your {trip.trip_type} trip with {operator.company_name} has been marked as completed.',
+                trip_request=trip,
+            )
+
+            print(f"✅ Trip {trip.id} marked completed by {operator.company_name}")
+            return Response({'message': 'Trip marked as completed successfully', 'status': 'completed'})
+
+        except Exception as e:
+            print(f"❌ Error in complete_trip: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class SpeedboatViewSet(viewsets.ModelViewSet):
     serializer_class = SpeedboatSerializer
@@ -251,8 +358,12 @@ class MarketplaceQuoteViewSet(viewsets.ModelViewSet):
                           status=status.HTTP_403_FORBIDDEN)
         
         if operator.subscription_status != 'active':
-            return Response({'error': 'Subscription expired'}, 
-                          status=status.HTTP_403_FORBIDDEN)
+            # Allow if within first 30 days (free trial)
+            from datetime import date
+            days_since = (date.today() - operator.created_at.date()).days
+            if days_since > 30:
+                return Response({'error': 'Subscription expired. Please renew to submit quotes.'}, 
+                              status=status.HTTP_403_FORBIDDEN)
         
         trip_request_id = request.data.get('trip_request_id')
         trip_request = get_object_or_404(TripRequest, id=trip_request_id)
