@@ -107,7 +107,9 @@ def accepted_requests(request):
     return render(request, 'admin_panel/accepted_requests.html', context)
 
 
-
+@login_required
+@user_passes_test(is_admin)
+def trip_requests_list(request):
     status_filter = request.GET.get('status', 'all')
     
     trips = TripRequest.objects.select_related('user').prefetch_related(
