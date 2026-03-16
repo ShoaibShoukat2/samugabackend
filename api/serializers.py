@@ -94,6 +94,7 @@ class OTPVerifySerializer(serializers.Serializer):
 class QuoteSerializer(serializers.ModelSerializer):
     operator_details = serializers.SerializerMethodField()
     boat_details = serializers.SerializerMethodField()
+    trip_request_details = serializers.SerializerMethodField()
     
     class Meta:
         model = Quote
@@ -102,7 +103,6 @@ class QuoteSerializer(serializers.ModelSerializer):
     
     def get_operator_details(self, obj):
         if obj.operator:
-            # Import here to avoid circular imports
             return {
                 'id': str(obj.operator.id),
                 'company_name': obj.operator.company_name,
@@ -124,6 +124,29 @@ class QuoteSerializer(serializers.ModelSerializer):
                 'has_snorkel_gear': obj.boat.has_snorkel_gear,
                 'has_fishing_gear': obj.boat.has_fishing_gear,
                 'has_life_jackets': obj.boat.has_life_jackets,
+            }
+        return None
+
+    def get_trip_request_details(self, obj):
+        if obj.trip_request:
+            t = obj.trip_request
+            u = t.user
+            return {
+                'id': str(t.id),
+                'trip_type': t.trip_type,
+                'pickup_location': t.pickup_location,
+                'destination': t.destination,
+                'trip_date': str(t.trip_date),
+                'trip_time': str(t.trip_time),
+                'passenger_count': t.passenger_count,
+                'status': t.status,
+                'special_notes': t.special_notes,
+                'user_details': {
+                    'first_name': u.first_name,
+                    'last_name': u.last_name,
+                    'phone_number': u.phone_number or '',
+                    'email': u.email,
+                },
             }
         return None
 

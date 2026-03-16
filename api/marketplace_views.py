@@ -366,9 +366,13 @@ class MarketplaceQuoteViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         if hasattr(self.request.user, 'operator_profile'):
-            return Quote.objects.filter(operator=self.request.user.operator_profile)
+            return Quote.objects.filter(
+                operator=self.request.user.operator_profile
+            ).select_related('trip_request__user', 'operator', 'boat').order_by('-created_at')
         elif self.request.user.user_type == 'customer':
-            return Quote.objects.filter(trip_request__user=self.request.user)
+            return Quote.objects.filter(
+                trip_request__user=self.request.user
+            ).select_related('trip_request__user', 'operator', 'boat').order_by('-created_at')
         return Quote.objects.none()
     
     @action(detail=False, methods=['post'])
