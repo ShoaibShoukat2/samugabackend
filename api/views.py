@@ -238,16 +238,40 @@ class TripRequestViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def accept_quote(self, request, pk=None):
+        """Legacy endpoint — accepts the first pending quote on this trip.
+        Prefer POST /marketplace-quotes/{id}/accept_quote/ for specific quote selection."""
         trip_request = self.get_object()
         if trip_request.user != request.user:
             return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
-        
-        if not hasattr(trip_request, 'quote'):
-            return Response({'error': 'No quote available'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
+        # Find the quote to accept — prefer explicit quote_id, else first pending
+        quote_id = request.data.get('quote_id')
+        if quote_id:
+            quote = trip_request.quotes.filter(id=quote_id, status='pending').first()
+        else:
+            quote = trip_request.quotes.filter(status='pending').first()
+
+        if not quote:
+            return Response({'error': 'No pending quote available'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Accept this quote, reject all others
+        trip_request.quotes.exclude(id=quote.id).update(status='rejected')
+        quote.status = 'accepted'
+        quote.save()
+
         trip_request.status = 'accepted'
         trip_request.save()
-        
+
+        # Notify operator
+        if quote.operator:
+            from .models import Notification
+            Notification.objects.create(
+                user=quote.operator.user,
+                title='Quote Accepted',
+                message=f'Your quote for {trip_request.trip_type} trip has been accepted!',
+                trip_request=trip_request,
+            )
+
         return Response({'message': 'Quote accepted. Please proceed with payment.'})
     
     @action(detail=False, methods=['get'])
