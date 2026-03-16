@@ -171,7 +171,7 @@ def trip_requests_list(request):
             quotes_map.setdefault(tid, []).append(q)
 
         for trip in trips:
-            trip._prefetched_quotes = quotes_map.get(str(trip.id), [])
+            trip.trip_quotes = quotes_map.get(str(trip.id), [])
 
         context = {
             'trips': trips,

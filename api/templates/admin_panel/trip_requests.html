@@ -55,7 +55,7 @@
                         <div class="text-xs text-gray-500">{{ trip.trip_time }}</div>
                     </td>
                     <td class="px-3 sm:px-6 py-4">
-                        {% for q in trip._prefetched_quotes %}
+                        {% for q in trip.trip_quotes %}
                             {% if q.status == 'accepted' %}
                             <div class="flex items-center gap-2">
                                 <span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
@@ -67,8 +67,8 @@
                             </div>
                             {% endif %}
                         {% endfor %}
-                        {% if trip._prefetched_quotes %}
-                        <div class="text-xs text-gray-400 mt-1">{{ trip._prefetched_quotes|length }} quote{{ trip._prefetched_quotes|length|pluralize }}</div>
+                        {% if trip.trip_quotes %}
+                        <div class="text-xs text-gray-400 mt-1">{{ trip.trip_quotes|length }} quote{{ trip.trip_quotes|length|pluralize }}</div>
                         {% endif %}
                     </td>
                     <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
