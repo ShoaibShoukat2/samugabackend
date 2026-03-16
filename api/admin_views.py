@@ -72,7 +72,9 @@ def admin_dashboard(request):
 def trip_requests_list(request):
     status_filter = request.GET.get('status', 'all')
     
-    trips = TripRequest.objects.select_related('user').order_by('-created_at')
+    trips = TripRequest.objects.select_related('user').prefetch_related(
+        'quotes__operator'
+    ).order_by('-created_at')
     
     if status_filter != 'all':
         trips = trips.filter(status=status_filter)
@@ -80,6 +82,15 @@ def trip_requests_list(request):
     context = {
         'trips': trips,
         'status_filter': status_filter,
+        'filter_tabs': [
+            ('all', 'All', 'bg-blue-600'),
+            ('pending', 'Pending', 'bg-yellow-600'),
+            ('quoted', 'Quoted', 'bg-blue-500'),
+            ('accepted', 'Accepted', 'bg-orange-500'),
+            ('payment_pending', 'Payment Pending', 'bg-purple-600'),
+            ('confirmed', 'Confirmed', 'bg-green-600'),
+            ('completed', 'Completed', 'bg-gray-600'),
+        ],
     }
     
     return render(request, 'admin_panel/trip_requests.html', context)

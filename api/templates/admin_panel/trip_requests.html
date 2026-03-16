@@ -7,21 +7,11 @@
 {% block content %}
 <!-- Filter Tabs -->
 <div class="mb-4 sm:mb-6 flex flex-wrap gap-2 overflow-x-auto">
-    <a href="?status=all" class="px-3 sm:px-4 py-2 text-sm rounded-lg {% if status_filter == 'all' %}bg-blue-600 text-white{% else %}bg-white text-gray-700 hover:bg-gray-50{% endif %} transition whitespace-nowrap">
-        All
+    {% for s, label, color in filter_tabs %}
+    <a href="?status={{ s }}" class="px-3 sm:px-4 py-2 text-sm rounded-lg {% if status_filter == s %}{{ color }} text-white{% else %}bg-white text-gray-700 hover:bg-gray-50{% endif %} transition whitespace-nowrap">
+        {{ label }}
     </a>
-    <a href="?status=pending" class="px-3 sm:px-4 py-2 text-sm rounded-lg {% if status_filter == 'pending' %}bg-yellow-600 text-white{% else %}bg-white text-gray-700 hover:bg-gray-50{% endif %} transition whitespace-nowrap">
-        Pending
-    </a>
-    <a href="?status=quoted" class="px-3 sm:px-4 py-2 text-sm rounded-lg {% if status_filter == 'quoted' %}bg-blue-600 text-white{% else %}bg-white text-gray-700 hover:bg-gray-50{% endif %} transition whitespace-nowrap">
-        Quoted
-    </a>
-    <a href="?status=accepted" class="px-3 sm:px-4 py-2 text-sm rounded-lg {% if status_filter == 'accepted' %}bg-green-600 text-white{% else %}bg-white text-gray-700 hover:bg-gray-50{% endif %} transition whitespace-nowrap">
-        Accepted
-    </a>
-    <a href="?status=confirmed" class="px-3 sm:px-4 py-2 text-sm rounded-lg {% if status_filter == 'confirmed' %}bg-green-600 text-white{% else %}bg-white text-gray-700 hover:bg-gray-50{% endif %} transition whitespace-nowrap">
-        Confirmed
-    </a>
+    {% endfor %}
 </div>
 
 <!-- Trips Table -->
@@ -33,38 +23,61 @@
                     <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
                     <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Trip Type</th>
                     <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Route</th>
-                    <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Date & Time</th>
-                    <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Passengers</th>
+                    <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Date</th>
+                    <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned Operator</th>
                     <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                     <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 {% for trip in trips %}
+                {% with accepted_quote=trip.quotes.all|dictsort:"status" %}
                 <tr class="hover:bg-gray-50">
-                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
-                        <div class="text-xs sm:text-sm font-medium text-gray-900">{{ trip.user.email }}</div>
-                        <div class="text-xs text-gray-500">{{ trip.user.phone_number|default:"-" }}</div>
+                    <td class="px-3 sm:px-6 py-4">
+                        <div class="text-xs sm:text-sm font-medium text-gray-900">{{ trip.user.first_name }} {{ trip.user.last_name }}</div>
+                        <div class="text-xs text-gray-500">{{ trip.user.email }}</div>
+                        <div class="text-xs text-gray-400">{{ trip.user.phone_number|default:"-" }}</div>
                     </td>
                     <td class="px-3 sm:px-6 py-4 whitespace-nowrap hidden md:table-cell">
                         <span class="text-xs sm:text-sm text-gray-900">{{ trip.get_trip_type_display }}</span>
+                        <div class="text-xs text-gray-400">👥 {{ trip.passenger_count }} pax</div>
                     </td>
                     <td class="px-3 sm:px-6 py-4">
                         <div class="text-xs sm:text-sm text-gray-900">📍 {{ trip.pickup_location }}</div>
                         <div class="text-xs sm:text-sm text-gray-500">→ {{ trip.destination }}</div>
                     </td>
                     <td class="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
-                        <div class="text-xs sm:text-sm text-gray-900">📅 {{ trip.trip_date|date:"M d, Y" }}</div>
-                        <div class="text-xs sm:text-sm text-gray-500">🕐 {{ trip.trip_time }}</div>
+                        <div class="text-xs sm:text-sm text-gray-900">{{ trip.trip_date|date:"M d, Y" }}</div>
+                        <div class="text-xs text-gray-500">{{ trip.trip_time }}</div>
                     </td>
-                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 hidden sm:table-cell">
-                        👥 {{ trip.passenger_count }}
+                    <td class="px-3 sm:px-6 py-4">
+                        {% for q in trip.quotes.all %}
+                            {% if q.status == 'accepted' %}
+                            <div class="flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
+                                <div>
+                                    <div class="text-xs sm:text-sm font-semibold text-green-700">{{ q.operator.company_name }}</div>
+                                    <div class="text-xs text-gray-500">{{ q.currency }} {{ q.amount }}</div>
+                                    <div class="text-xs text-gray-400">{{ q.operator.phone_number }}</div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% empty %}
+                            <span class="text-xs text-gray-400">—</span>
+                        {% endfor %}
+                        {% comment %}Show all quotes count{% endcomment %}
+                        {% if trip.quotes.count > 0 %}
+                        <div class="text-xs text-gray-400 mt-1">{{ trip.quotes.count }} quote{{ trip.quotes.count|pluralize }}</div>
+                        {% endif %}
                     </td>
                     <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
                         <span class="px-2 sm:px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
                             {% if trip.status == 'pending' %}bg-yellow-100 text-yellow-800
-                            {% elif trip.status == 'confirmed' %}bg-green-100 text-green-800
                             {% elif trip.status == 'quoted' %}bg-blue-100 text-blue-800
+                            {% elif trip.status == 'accepted' %}bg-orange-100 text-orange-800
+                            {% elif trip.status == 'payment_pending' %}bg-purple-100 text-purple-800
+                            {% elif trip.status == 'confirmed' %}bg-green-100 text-green-800
+                            {% elif trip.status == 'completed' %}bg-gray-100 text-gray-600
                             {% else %}bg-gray-100 text-gray-800{% endif %}">
                             {{ trip.status|upper }}
                         </span>
@@ -72,13 +85,18 @@
                     <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm">
                         {% if trip.status == 'pending' %}
                         <a href="{% url 'admin_send_quote' trip.id %}" class="bg-blue-600 hover:bg-blue-700 text-white px-2 sm:px-4 py-1 sm:py-2 rounded-lg transition text-xs sm:text-sm">
-                            Quote
+                            Send Quote
+                        </a>
+                        {% elif trip.status == 'payment_pending' %}
+                        <a href="{% url 'admin_payments' %}" class="bg-purple-600 hover:bg-purple-700 text-white px-2 sm:px-4 py-1 sm:py-2 rounded-lg transition text-xs sm:text-sm">
+                            Verify Payment
                         </a>
                         {% else %}
-                        <span class="text-gray-400">-</span>
+                        <span class="text-gray-400 text-xs">{{ trip.status }}</span>
                         {% endif %}
                     </td>
                 </tr>
+                {% endwith %}
                 {% empty %}
                 <tr>
                     <td colspan="7" class="px-3 sm:px-6 py-8 text-center text-gray-500 text-sm">
