@@ -155,35 +155,63 @@ def accepted_requests(request):
 def trip_requests_list(request):
     status_filter = request.GET.get('status', 'all')
     try:
-        qs = TripRequest.objects.select_related('user').order_by('-created_at')
+        from django.db import connection
+
+        # Step 1: fetch trips via raw SQL — zero ORM UUID traversal
+        status_clause = ''
+        params = []
         if status_filter != 'all':
-            qs = qs.filter(status=status_filter)
-        trips = list(qs)
-        trip_ids = [t.id for t in trips]
+            status_clause = "WHERE tr.status = %s"
+            params.append(status_filter)
 
-        # Fetch quotes as plain dicts — zero ORM traversal in template
-        quotes_raw = Quote.objects.filter(
-            trip_request_id__in=trip_ids
-        ).values(
-            'id', 'trip_request_id', 'status', 'amount', 'currency',
-            'operator__company_name', 'operator__phone_number',
-        )
+        with connection.cursor() as cursor:
+            cursor.execute(f"""
+                SELECT tr.id, tr.trip_type, tr.pickup_location, tr.destination,
+                       tr.trip_date, tr.trip_time, tr.passenger_count,
+                       tr.status, tr.created_at, tr.updated_at,
+                       u.first_name, u.last_name, u.email, u.phone_number
+                FROM api_triprequest tr
+                JOIN api_user u ON tr.user_id = u.id
+                {status_clause}
+                ORDER BY tr.created_at DESC
+            """, params)
+            cols = [c[0] for c in cursor.description]
+            trip_rows = [dict(zip(cols, row)) for row in cursor.fetchall()]
+
+        trip_ids = [r['id'] for r in trip_rows]
+
+        # Step 2: fetch quotes + operator names via raw SQL
         quotes_map: dict = {}
-        for q in quotes_raw:
-            tid = str(q['trip_request_id'])
-            quotes_map.setdefault(tid, []).append({
-                'status': q['status'],
-                'amount': q['amount'],
-                'currency': q['currency'],
-                'operator_name': q['operator__company_name'] or '',
-                'operator_phone': q['operator__phone_number'] or '',
-            })
+        if trip_ids:
+            placeholders = ','.join(['%s'] * len(trip_ids))
+            with connection.cursor() as cursor:
+                cursor.execute(f"""
+                    SELECT q.trip_request_id, q.status, q.amount, q.currency,
+                           COALESCE(op.company_name, '') as operator_name,
+                           COALESCE(op.phone_number, '') as operator_phone
+                    FROM api_quote q
+                    LEFT JOIN api_speedboatoperator op ON q.operator_id = op.id
+                    WHERE q.trip_request_id IN ({placeholders})
+                """, [str(i) for i in trip_ids])
+                for row in cursor.fetchall():
+                    tid = str(row[0])
+                    quotes_map.setdefault(tid, []).append({
+                        'status': row[1],
+                        'amount': row[2],
+                        'currency': row[3],
+                        'operator_name': row[4],
+                        'operator_phone': row[5],
+                    })
 
-        for trip in trips:
-            trip.trip_quotes = quotes_map.get(str(trip.id), [])
+        # Step 3: attach quotes to trip dicts
+        for trip in trip_rows:
+            trip['trip_quotes'] = quotes_map.get(str(trip['id']), [])
+            trip['accepted_quote'] = next(
+                (q for q in trip['trip_quotes'] if q['status'] == 'accepted'), None
+            )
 
         context = {
-            'trips': trips,
+            'trips': trip_rows,
             'status_filter': status_filter,
             'filter_tabs': [
                 ('all', 'All', 'bg-blue-600'),
