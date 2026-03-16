@@ -71,30 +71,61 @@ def admin_dashboard(request):
 @user_passes_test(is_admin)
 def accepted_requests(request):
     """Shows all trips that have been accepted by an operator — full assignment details"""
+    status_filter = request.GET.get('status', 'all')
+
     trips = TripRequest.objects.filter(
         status__in=['accepted', 'payment_pending', 'confirmed', 'completed']
     ).select_related('user').prefetch_related(
-        'quotes__operator__user',
+        'quotes__operator',
         'quotes__boat',
-        'payment',
-        'booking',
     ).order_by('-updated_at')
 
-    status_filter = request.GET.get('status', 'all')
     if status_filter != 'all':
         trips = trips.filter(status=status_filter)
 
-    # Attach accepted quote to each trip for easy template access
+    # Build safe trip_data list — avoid UUID issues by doing Python-level filtering
     trip_data = []
     for trip in trips:
-        accepted_q = trip.quotes.filter(status='accepted').first()
-        trip_data.append({
-            'trip': trip,
-            'accepted_quote': accepted_q,
-        })
+        try:
+            accepted_q = None
+            for q in trip.quotes.all():
+                if q.status == 'accepted':
+                    accepted_q = q
+                    break
+
+            # Safely get payment and booking
+            try:
+                payment = trip.payment
+            except Exception:
+                payment = None
+
+            try:
+                booking = trip.booking
+            except Exception:
+                booking = None
+
+            trip_data.append({
+                'trip': trip,
+                'accepted_quote': accepted_q,
+                'payment': payment,
+                'booking': booking,
+            })
+        except Exception as e:
+            print(f"⚠️ Skipping trip {trip.id}: {e}")
+            continue
+
+    # Count stats in Python (avoid template filter issues)
+    stats = {
+        'total': len(trip_data),
+        'awaiting_payment': sum(1 for d in trip_data if d['trip'].status == 'accepted'),
+        'payment_pending': sum(1 for d in trip_data if d['trip'].status == 'payment_pending'),
+        'confirmed': sum(1 for d in trip_data if d['trip'].status == 'confirmed'),
+        'completed': sum(1 for d in trip_data if d['trip'].status == 'completed'),
+    }
 
     context = {
         'trip_data': trip_data,
+        'stats': stats,
         'status_filter': status_filter,
         'filter_tabs': [
             ('all', 'All Assigned', 'bg-blue-600'),
