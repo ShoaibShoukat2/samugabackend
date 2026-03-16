@@ -176,14 +176,23 @@ class SpeedboatOperatorViewSet(viewsets.ModelViewSet):
             ).prefetch_related('quotes__operator').select_related('user').order_by('-created_at')
 
             # 2. My accepted/confirmed/completed trips
-            # Find trips where this operator has an accepted quote OR is the selected_quote operator
+            # Use subquery to correctly find trips where THIS operator's quote is accepted
+            # (avoids Django ORM multi-join false positives)
+            from django.db.models import Subquery, OuterRef
+            accepted_quote_trip_ids = Quote.objects.filter(
+                operator=operator,
+                status='accepted'
+            ).values_list('trip_request_id', flat=True)
+
             my_accepted_trips = TripRequest.objects.filter(
-                status__in=['accepted', 'payment_pending', 'confirmed', 'completed'],
-                quotes__operator=operator,
-                quotes__status='accepted'
+                id__in=accepted_quote_trip_ids,
+                status__in=['accepted', 'payment_pending', 'confirmed', 'completed']
             ).prefetch_related(
                 'quotes__operator', 'quotes__boat', 'payment', 'booking'
             ).select_related('user').distinct().order_by('-updated_at')
+
+            print(f"✅ Operator {operator.company_name} — accepted quote trip IDs: {list(accepted_quote_trip_ids)}")
+            print(f"✅ my_accepted_trips count: {my_accepted_trips.count()}")
 
             result = []
 
@@ -452,7 +461,7 @@ class MarketplaceQuoteViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Quote no longer available'}, 
                           status=status.HTTP_400_BAD_REQUEST)
         
-        if quote.valid_until < timezone.now():
+        if quote.valid_until and quote.valid_until < timezone.now():
             quote.status = 'expired'
             quote.save()
             return Response({'error': 'Quote has expired'}, 
