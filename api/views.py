@@ -223,7 +223,8 @@ class AuthViewSet(viewsets.ViewSet):
                 return Response({'exists': False, 'email_searched': email})
 
     @action(detail=False, methods=['post', 'put'], permission_classes=[IsAuthenticated])
-    def update_profile(self, request):        user = request.user
+    def update_profile(self, request):
+        user = request.user
         serializer = UserSerializer(user, data=request.data, partial=True, context={'request': request})
         if serializer.is_valid():
             serializer.save()
