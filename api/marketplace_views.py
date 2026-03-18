@@ -250,6 +250,8 @@ class SpeedboatOperatorViewSet(viewsets.ModelViewSet):
                         'method': p.payment_method,
                         'submitted_at': p.created_at.isoformat() if p.created_at else None,
                         'verified_at': p.verified_at.isoformat() if p.verified_at else None,
+                        'proof_url': request.build_absolute_uri(p.payment_proof.url) if p.payment_proof else None,
+                        'transaction_id': p.transaction_id or '',
                     }
                 except Exception:
                     trip_data['payment_info'] = None
@@ -423,68 +425,105 @@ class MarketplaceQuoteViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Quote already submitted for this trip'}, 
                           status=status.HTTP_400_BAD_REQUEST)
         
-        # Create quote
-        quote_data = request.data.copy()
-        quote_data['trip_request'] = trip_request.id
-        quote_data['operator'] = operator.id
-        quote_data['valid_until'] = timezone.now() + timedelta(days=7)  # Valid for 7 days
-        
-        serializer = self.get_serializer(data=quote_data)
-        if serializer.is_valid():
-            quote = serializer.save()
-            
-            # Update trip request status
-            trip_request.status = 'quoted'
-            trip_request.save()
-            
-            # Notify customer
-            from .models import Notification
-            Notification.objects.create(
-                user=trip_request.user,
-                title='New Quote Received',
-                message=f'You received a quote from {operator.company_name} for your {trip_request.trip_type} trip',
-                trip_request=trip_request
+        # Create quote directly — bypass serializer to guarantee operator FK is set
+        try:
+            amount = request.data.get('amount')
+            currency = request.data.get('currency', 'USD')
+            pickup_time = request.data.get('pickup_time', '09:00:00')
+            notes = request.data.get('notes', '')
+            boat_id = request.data.get('boat')
+
+            boat = None
+            if boat_id:
+                from .models import Speedboat
+                boat = Speedboat.objects.filter(id=boat_id, operator=operator).first()
+
+            from decimal import Decimal
+            amount_decimal = Decimal(str(amount))
+            commission_amount = (amount_decimal * Decimal('5')) / Decimal('100')
+
+            quote = Quote.objects.create(
+                trip_request=trip_request,
+                operator=operator,
+                boat=boat,
+                amount=amount_decimal,
+                currency=currency,
+                pickup_time=pickup_time,
+                notes=notes,
+                status='pending',
+                valid_until=timezone.now() + timedelta(days=7),
+                commission_rate=Decimal('5.00'),
+                commission_amount=commission_amount,
             )
-            
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': f'Failed to create quote: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Update trip request status
+        trip_request.status = 'quoted'
+        trip_request.save()
+
+        # Notify customer
+        from .models import Notification
+        Notification.objects.create(
+            user=trip_request.user,
+            title='New Quote Received',
+            message=f'You received a quote from {operator.company_name} for your {trip_request.trip_type} trip',
+            trip_request=trip_request
+        )
+
+        return Response({
+            'id': str(quote.id),
+            'trip_request': str(quote.trip_request_id),
+            'operator': str(quote.operator_id),
+            'amount': str(quote.amount),
+            'currency': quote.currency,
+            'status': quote.status,
+            'message': 'Quote submitted successfully',
+        }, status=status.HTTP_201_CREATED)
     
     @action(detail=True, methods=['post'])
     def accept_quote(self, request, pk=None):
         """Customer accepts a quote"""
         quote = self.get_object()
-        
+
         if quote.trip_request.user != request.user:
             return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
-        
+
         if quote.status != 'pending':
-            return Response({'error': 'Quote no longer available'}, 
+            return Response({'error': 'Quote no longer available'},
                           status=status.HTTP_400_BAD_REQUEST)
-        
+
         if quote.valid_until and quote.valid_until < timezone.now():
             quote.status = 'expired'
             quote.save()
-            return Response({'error': 'Quote has expired'}, 
+            return Response({'error': 'Quote has expired'},
                           status=status.HTTP_400_BAD_REQUEST)
-        
-        # Accept this quote and reject others
-        Quote.objects.filter(trip_request=quote.trip_request).exclude(id=quote.id).update(status='rejected')
+
+        trip = quote.trip_request
+
+        # Accept this quote, reject all others for this trip
+        Quote.objects.filter(trip_request=trip).exclude(id=quote.id).update(status='rejected')
         quote.status = 'accepted'
         quote.save()
-        
-        # Update trip request
-        quote.trip_request.status = 'accepted'
-        quote.trip_request.save()
-        
+
+        # Update trip status
+        trip.status = 'accepted'
+        trip.save()
+
         # Notify operator
-        from .models import Notification
-        Notification.objects.create(
-            user=quote.operator.user,
-            title='Quote Accepted',
-            message=f'Your quote for {quote.trip_request.trip_type} trip has been accepted!',
-            trip_request=quote.trip_request
-        )
-        
+        try:
+            from .models import Notification
+            if quote.operator and quote.operator.user:
+                Notification.objects.create(
+                    user=quote.operator.user,
+                    title='Quote Accepted',
+                    message=f'Your quote for {trip.trip_type} trip has been accepted!',
+                    trip_request=trip,
+                )
+        except Exception as e:
+            print(f"⚠️ Notification failed: {e}")
+
+        print(f"✅ Quote {quote.id} accepted — operator: {quote.operator_id}, trip: {trip.id}")
         return Response({'message': 'Quote accepted successfully'})
 
     @action(detail=False, methods=['post'])
