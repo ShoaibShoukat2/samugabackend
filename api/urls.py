@@ -6,7 +6,7 @@ from .views import (
 )
 from .marketplace_views import (
     SpeedboatOperatorViewSet, SpeedboatViewSet, MarketplaceQuoteViewSet,
-    OperatorSubscriptionViewSet
+    OperatorSubscriptionViewSet, OperatorRatingViewSet
 )
 from .auth_views import admin_login_view, admin_logout_view
 from .admin_views import (
@@ -15,7 +15,8 @@ from .admin_views import (
     accepted_requests,
     # Marketplace views
     operators_list, operator_detail, verify_operator, subscriptions_list,
-    verify_subscription, marketplace_quotes, revenue_dashboard, platform_settings
+    verify_subscription, marketplace_quotes, revenue_dashboard, platform_settings,
+    ratings_list
 )
 
 router = DefaultRouter()
@@ -31,6 +32,7 @@ router.register(r'operators', SpeedboatOperatorViewSet, basename='operator')
 router.register(r'boats', SpeedboatViewSet, basename='boat')
 router.register(r'marketplace-quotes', MarketplaceQuoteViewSet, basename='marketplace-quote')
 router.register(r'subscriptions', OperatorSubscriptionViewSet, basename='subscription')
+router.register(r'ratings', OperatorRatingViewSet, basename='rating')
 
 urlpatterns = [
     # API endpoints
@@ -66,4 +68,5 @@ urlpatterns = [
     path('admin-panel/marketplace-quotes/', marketplace_quotes, name='admin_marketplace_quotes'),
     path('admin-panel/revenue/', revenue_dashboard, name='admin_revenue_dashboard'),
     path('admin-panel/settings/', platform_settings, name='admin_platform_settings'),
+    path('admin-panel/ratings/', ratings_list, name='admin_ratings'),
 ]

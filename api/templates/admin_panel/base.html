@@ -87,6 +87,10 @@
                     <i class="fas fa-chart-line mr-3 text-emerald-400"></i>
                     <span>Revenue</span>
                 </a>
+                <a href="/api/admin-panel/ratings/" class="flex items-center px-4 py-3 {% if 'ratings' in request.path %}bg-gray-700{% else %}hover:bg-gray-700{% endif %} rounded-xl transition-all">
+                    <i class="fas fa-star mr-3 text-yellow-400"></i>
+                    <span>Ratings & Reviews</span>
+                </a>
                 <a href="/api/admin-panel/users/" class="flex items-center px-4 py-3 {% if 'users' in request.path %}bg-gray-700{% else %}hover:bg-gray-700{% endif %} rounded-xl transition-all">
                     <i class="fas fa-users mr-3 text-teal-400"></i>
                     <span>Users</span>
@@ -150,6 +154,10 @@
                 <a href="/api/admin-panel/revenue/" class="flex items-center px-4 py-3 {% if 'revenue' in request.path %}bg-gray-700{% else %}hover:bg-gray-700{% endif %} rounded-xl transition-all">
                     <i class="fas fa-chart-line mr-3 text-emerald-400"></i>
                     <span>Revenue</span>
+                </a>
+                <a href="/api/admin-panel/ratings/" class="flex items-center px-4 py-3 {% if 'ratings' in request.path %}bg-gray-700{% else %}hover:bg-gray-700{% endif %} rounded-xl transition-all">
+                    <i class="fas fa-star mr-3 text-yellow-400"></i>
+                    <span>Ratings & Reviews</span>
                 </a>
                 <a href="/api/admin-panel/users/" class="flex items-center px-4 py-3 {% if 'users' in request.path %}bg-gray-700{% else %}hover:bg-gray-700{% endif %} rounded-xl transition-all">
                     <i class="fas fa-users mr-3 text-teal-400"></i>

@@ -1,0 +1,107 @@
+{% extends 'admin_panel/base.html' %}
+{% block title %}Customer Ratings{% endblock %}
+
+{% block content %}
+<div class="p-6">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">Customer Ratings & Feedback</h1>
+    <p class="text-gray-500 mt-1">All ratings submitted by customers for operators</p>
+  </div>
+
+  <!-- Filters -->
+  <form method="get" class="flex flex-wrap gap-3 mb-6">
+    <input
+      type="text" name="operator" value="{{ operator_filter }}"
+      placeholder="Filter by operator name..."
+      class="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+    />
+    <select name="rating" class="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <option value="">All Ratings</option>
+      {% for i in "54321" %}
+      <option value="{{ i }}" {% if rating_filter == i %}selected{% endif %}>{{ i }} Star{% if i != "1" %}s{% endif %}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700">Filter</button>
+    <a href="{% url 'admin_ratings' %}" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-300">Clear</a>
+  </form>
+
+  <!-- Stats row -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <p class="text-xs text-gray-500 uppercase font-semibold">Total Ratings</p>
+      <p class="text-2xl font-bold text-gray-800 mt-1">{{ ratings|length }}</p>
+    </div>
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <p class="text-xs text-gray-500 uppercase font-semibold">5 Stars</p>
+      <p class="text-2xl font-bold text-yellow-500 mt-1">{{ ratings|dictsort:"rating"|last }}</p>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="text-left px-5 py-3 text-gray-600 font-semibold">Customer</th>
+          <th class="text-left px-5 py-3 text-gray-600 font-semibold">Operator</th>
+          <th class="text-left px-5 py-3 text-gray-600 font-semibold">Rating</th>
+          <th class="text-left px-5 py-3 text-gray-600 font-semibold">Review</th>
+          <th class="text-left px-5 py-3 text-gray-600 font-semibold">Trip</th>
+          <th class="text-left px-5 py-3 text-gray-600 font-semibold">Date</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for r in ratings %}
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="px-5 py-4">
+            <p class="font-semibold text-gray-800">{{ r.customer.first_name }} {{ r.customer.last_name }}</p>
+            <p class="text-xs text-gray-400">{{ r.customer.email }}</p>
+          </td>
+          <td class="px-5 py-4">
+            <p class="font-semibold text-gray-800">{{ r.operator.company_name }}</p>
+            <p class="text-xs text-gray-400">{{ r.operator.phone_number }}</p>
+          </td>
+          <td class="px-5 py-4">
+            <div class="flex items-center gap-1">
+              {% for i in "12345" %}
+                {% if forloop.counter <= r.rating %}
+                  <span class="text-yellow-400 text-lg">★</span>
+                {% else %}
+                  <span class="text-gray-300 text-lg">★</span>
+                {% endif %}
+              {% endfor %}
+              <span class="ml-1 text-sm font-bold text-gray-700">{{ r.rating }}/5</span>
+            </div>
+          </td>
+          <td class="px-5 py-4 max-w-xs">
+            {% if r.review %}
+              <p class="text-gray-700 text-sm italic">"{{ r.review }}"</p>
+            {% else %}
+              <span class="text-gray-400 text-xs">No review</span>
+            {% endif %}
+          </td>
+          <td class="px-5 py-4">
+            {% if r.booking.trip_request %}
+              <p class="text-xs text-gray-600">{{ r.booking.trip_request.trip_type|title }}</p>
+              <p class="text-xs text-gray-400">{{ r.booking.booking_code }}</p>
+            {% else %}
+              <span class="text-gray-400 text-xs">—</span>
+            {% endif %}
+          </td>
+          <td class="px-5 py-4 text-xs text-gray-500">
+            {{ r.created_at|date:"M d, Y" }}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="px-5 py-12 text-center text-gray-400">
+            <p class="text-4xl mb-3">⭐</p>
+            <p class="font-semibold">No ratings yet</p>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

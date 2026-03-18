@@ -720,3 +720,27 @@ def platform_settings(request):
     }
     
     return render(request, 'admin_panel/platform_settings.html', context)
+
+
+@login_required
+@user_passes_test(is_admin)
+def ratings_list(request):
+    """Admin view — all customer ratings with operator and customer details"""
+    operator_filter = request.GET.get('operator', '')
+    rating_filter = request.GET.get('rating', '')
+
+    ratings = OperatorRating.objects.select_related(
+        'customer', 'operator', 'booking__trip_request'
+    ).order_by('-created_at')
+
+    if operator_filter:
+        ratings = ratings.filter(operator__company_name__icontains=operator_filter)
+    if rating_filter:
+        ratings = ratings.filter(rating=rating_filter)
+
+    context = {
+        'ratings': ratings,
+        'operator_filter': operator_filter,
+        'rating_filter': rating_filter,
+    }
+    return render(request, 'admin_panel/ratings.html', context)

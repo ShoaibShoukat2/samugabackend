@@ -10,7 +10,7 @@ from datetime import timedelta
 from .models import (SpeedboatOperator, Speedboat, Quote, TripRequest, 
                     OperatorSubscription, OperatorRating, PlatformRevenue)
 from .serializers import (SpeedboatOperatorSerializer, SpeedboatSerializer, 
-                         QuoteSerializer, OperatorSubscriptionSerializer)
+                         QuoteSerializer, OperatorSubscriptionSerializer, OperatorRatingSerializer)
 
 class SpeedboatOperatorViewSet(viewsets.ModelViewSet):
     serializer_class = SpeedboatOperatorSerializer
@@ -691,3 +691,86 @@ class OperatorSubscriptionViewSet(viewsets.ModelViewSet):
         
         return Response(OperatorSubscriptionSerializer(subscription).data, 
                        status=status.HTTP_201_CREATED)
+
+
+class OperatorRatingViewSet(viewsets.ModelViewSet):
+    serializer_class = OperatorRatingSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return OperatorRating.objects.select_related('customer', 'operator', 'booking').order_by('-created_at')
+
+    @action(detail=False, methods=['post'])
+    def submit_rating(self, request):
+        """Customer submits a rating + review for an operator after a completed trip."""
+        if request.user.user_type != 'customer':
+            return Response({'error': 'Only customers can submit ratings'}, status=status.HTTP_403_FORBIDDEN)
+
+        trip_id = request.data.get('trip_id')
+        rating_value = request.data.get('rating')
+        review = request.data.get('review', '')
+
+        if not trip_id or not rating_value:
+            return Response({'error': 'trip_id and rating are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            rating_value = int(rating_value)
+            if not (1 <= rating_value <= 5):
+                raise ValueError
+        except (ValueError, TypeError):
+            return Response({'error': 'Rating must be between 1 and 5'}, status=status.HTTP_400_BAD_REQUEST)
+
+        trip = get_object_or_404(TripRequest, id=trip_id, user=request.user)
+
+        if trip.status != 'completed':
+            return Response({'error': 'You can only rate completed trips'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get the booking
+        try:
+            booking = trip.booking
+        except Exception:
+            return Response({'error': 'No booking found for this trip'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check already rated
+        if OperatorRating.objects.filter(booking=booking).exists():
+            return Response({'error': 'You have already rated this trip'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get the accepted quote to find the operator
+        accepted_quote = trip.quotes.filter(status='accepted').first()
+        if not accepted_quote or not accepted_quote.operator:
+            return Response({'error': 'No operator found for this trip'}, status=status.HTTP_400_BAD_REQUEST)
+
+        operator = accepted_quote.operator
+
+        # Create rating
+        rating = OperatorRating.objects.create(
+            booking=booking,
+            customer=request.user,
+            operator=operator,
+            rating=rating_value,
+            review=review,
+        )
+
+        # Update operator average rating
+        all_ratings = OperatorRating.objects.filter(operator=operator)
+        total = all_ratings.count()
+        avg = all_ratings.aggregate(models.Avg('rating'))['rating__avg'] or 0
+        operator.average_rating = round(avg, 2)
+        operator.total_ratings = total
+        operator.save()
+
+        # Notify operator
+        from .models import Notification
+        Notification.objects.create(
+            user=operator.user,
+            title='New Rating Received',
+            message=f'{request.user.first_name} gave you {rating_value} star{"s" if rating_value > 1 else ""}{"." if not review else f": {review[:80]}"}',
+            trip_request=trip,
+        )
+
+        return Response({
+            'message': 'Rating submitted successfully',
+            'rating': rating_value,
+            'operator': operator.company_name,
+            'average_rating': float(operator.average_rating),
+        }, status=status.HTTP_201_CREATED)
