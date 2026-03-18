@@ -74,22 +74,35 @@ class AuthViewSet(viewsets.ViewSet):
                 user = authenticate(request, username=email, password=password)
                 
                 if not user:
-                    # Fallback: look up user by email and check password directly
-                    # This handles cases where username != email
+                    # Fallback: look up user by email (case-insensitive) and check password directly
+                    # This handles cases where username != email, or email case mismatch
                     try:
-                        user_obj = User.objects.get(email=email)
+                        user_obj = User.objects.get(email__iexact=email)
                         print(f"🔍 User found: {user_obj.email} | username: {user_obj.username} | active: {user_obj.is_active} | has_password: {user_obj.has_usable_password()}")
-                        if password and user_obj.check_password(password):
-                            if user_obj.is_active:
-                                user = user_obj
+                        
+                        # Also try authenticate with the stored username (handles username != email)
+                        if not user:
+                            user = authenticate(request, username=user_obj.username, password=password)
+                        
+                        if not user:
+                            if password and user_obj.check_password(password):
+                                if user_obj.is_active:
+                                    user = user_obj
+                                else:
+                                    return Response({'error': 'Account is disabled. Contact support.'}, status=status.HTTP_401_UNAUTHORIZED)
                             else:
-                                return Response({'error': 'Account is disabled. Contact support.'}, status=status.HTTP_401_UNAUTHORIZED)
-                        else:
-                            print(f"❌ Password check failed for {user_obj.email}")
-                            return Response({'error': 'Incorrect password. Please try again.'}, status=status.HTTP_401_UNAUTHORIZED)
+                                print(f"❌ Password check failed for {user_obj.email}")
+                                return Response({'error': 'Incorrect password. Please try again.'}, status=status.HTTP_401_UNAUTHORIZED)
                     except User.DoesNotExist:
                         print(f"❌ No user found with email: {email}")
                         return Response({'error': 'No account found with this email address.'}, status=status.HTTP_401_UNAUTHORIZED)
+                    except User.MultipleObjectsReturned:
+                        # Multiple accounts with same email (different case) — pick the active one
+                        user_obj = User.objects.filter(email__iexact=email).filter(is_active=True).first()
+                        if user_obj and user_obj.check_password(password):
+                            user = user_obj
+                        else:
+                            return Response({'error': 'Incorrect password. Please try again.'}, status=status.HTTP_401_UNAUTHORIZED)
 
             elif phone_number:
                 try:
@@ -178,9 +191,39 @@ class AuthViewSet(viewsets.ViewSet):
                 return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
+    def check_account(self, request):
+        """Debug endpoint — check if an account exists by email"""
+        email = request.data.get('email', '').strip().lower()
+        if not email:
+            return Response({'error': 'email required'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = User.objects.get(email__iexact=email)
+            return Response({
+                'exists': True,
+                'email': user.email,
+                'username': user.username,
+                'user_type': user.user_type,
+                'is_active': user.is_active,
+                'has_operator_profile': hasattr(user, 'operator_profile'),
+            })
+        except User.DoesNotExist:
+            # Also check by username
+            try:
+                user = User.objects.get(username__iexact=email)
+                return Response({
+                    'exists': True,
+                    'note': 'Found by username not email',
+                    'email': user.email,
+                    'username': user.username,
+                    'user_type': user.user_type,
+                    'is_active': user.is_active,
+                })
+            except User.DoesNotExist:
+                return Response({'exists': False, 'email_searched': email})
+
     @action(detail=False, methods=['post', 'put'], permission_classes=[IsAuthenticated])
-    def update_profile(self, request):
-        user = request.user
+    def update_profile(self, request):        user = request.user
         serializer = UserSerializer(user, data=request.data, partial=True, context={'request': request})
         if serializer.is_valid():
             serializer.save()

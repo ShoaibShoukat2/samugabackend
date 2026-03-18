@@ -125,48 +125,20 @@ class SpeedboatOperatorViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['get'])
     def trip_requests(self, request, pk=None):
-        """Uber-style: ALL pending/quoted trip requests shown to every verified operator.
-        Also returns this operator's accepted/confirmed trips so they can track their jobs.
-        First month is FREE — subscription check is lenient for new operators."""
+        """Uber-style: ALL pending/quoted trip requests shown to every operator.
+        First 30 days are completely FREE — no verification or subscription required.
+        After 30 days, subscription must be active."""
         try:
             operator = self.get_object()
 
-            if operator.verification_status != 'verified':
-                return Response({
-                    'error': 'Operator not verified',
-                    'detail': f'Your account status is: {operator.verification_status}. Please wait for admin approval.'
-                }, status=status.HTTP_403_FORBIDDEN)
+            from datetime import date
+            days_since_registration = (date.today() - operator.created_at.date()).days
 
-            # Auto-grant free trial if no subscription exists yet
-            if operator.subscription_status != 'active':
-                from datetime import date
-                days_since_registration = (date.today() - operator.created_at.date()).days
-                if days_since_registration <= 30:
-                    try:
-                        from dateutil.relativedelta import relativedelta
-                        today = date.today()
-                        free_end = operator.created_at.date() + relativedelta(months=1)
-                        OperatorSubscription.objects.get_or_create(
-                            operator=operator,
-                            defaults={
-                                'plan': 'basic',
-                                'amount': 0,
-                                'start_date': operator.created_at.date(),
-                                'end_date': free_end,
-                                'payment_status': 'paid',
-                                'paid_at': timezone.now(),
-                            }
-                        )
-                        operator.subscription_status = 'active'
-                        operator.save()
-                        print(f"✅ Auto-granted free trial to {operator.company_name}")
-                    except Exception as e:
-                        print(f"⚠️ Could not auto-grant trial: {e}")
-                else:
-                    return Response({
-                        'error': 'Subscription not active',
-                        'detail': 'Your free trial has ended. Please activate your subscription to access trip requests.'
-                    }, status=status.HTTP_403_FORBIDDEN)
+            if days_since_registration > 30 and operator.subscription_status != 'active':
+                return Response({
+                    'error': 'Subscription not active',
+                    'detail': 'Your free trial has ended. Please activate your subscription to access trip requests.'
+                }, status=status.HTTP_403_FORBIDDEN)
 
             from .serializers import TripRequestSerializer
 
@@ -330,6 +302,86 @@ class SpeedboatOperatorViewSet(viewsets.ModelViewSet):
             traceback.print_exc()
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    @action(detail=True, methods=['post'])
+    def verify_payment(self, request, pk=None):
+        """Operator verifies customer payment for their accepted trip."""
+        try:
+            operator = self.get_object()
+
+            trip_id = request.data.get('trip_id')
+            if not trip_id:
+                return Response({'error': 'trip_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+            trip = get_object_or_404(TripRequest, id=trip_id)
+
+            # Ensure this operator has an accepted quote for this trip
+            my_accepted_quote = trip.quotes.filter(operator=operator, status='accepted').first()
+            if not my_accepted_quote:
+                return Response({'error': 'You do not have an accepted quote for this trip'}, status=status.HTTP_403_FORBIDDEN)
+
+            if trip.status != 'payment_pending':
+                return Response({'error': f'No pending payment to verify (trip status: {trip.status})'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Verify payment
+            try:
+                payment = trip.payment
+            except Exception:
+                return Response({'error': 'No payment record found for this trip'}, status=status.HTTP_404_NOT_FOUND)
+
+            payment.status = 'verified'
+            payment.verified_at = timezone.now()
+            payment.save()
+
+            # Confirm trip
+            trip.status = 'confirmed'
+            trip.save()
+
+            # Generate booking code + QR if not already created
+            import qrcode
+            from io import BytesIO
+            from django.core.files import File
+            import random
+
+            def generate_booking_code():
+                return f"ST{random.randint(100000, 999999)}"
+
+            from .models import Booking
+            booking, created = Booking.objects.get_or_create(
+                trip_request=trip,
+                defaults={'booking_code': generate_booking_code()}
+            )
+            if created:
+                qr = qrcode.QRCode(version=1, box_size=10, border=5)
+                qr.add_data(booking.booking_code)
+                qr.make(fit=True)
+                img = qr.make_image(fill_color="black", back_color="white")
+                buffer = BytesIO()
+                img.save(buffer, format='PNG')
+                buffer.seek(0)
+                booking.qr_code.save(f'{booking.booking_code}.png', File(buffer), save=True)
+
+            # Notify customer
+            from .models import Notification
+            Notification.objects.create(
+                user=trip.user,
+                title='Payment Verified — Booking Confirmed',
+                message=f'Your payment has been verified by {operator.company_name}. Booking code: {booking.booking_code}',
+                trip_request=trip,
+            )
+
+            print(f"✅ Payment verified by operator {operator.company_name} for trip {trip.id}")
+            return Response({
+                'message': 'Payment verified and booking confirmed',
+                'booking_code': booking.booking_code,
+                'status': 'confirmed',
+            })
+
+        except Exception as e:
+            print(f"❌ Error in verify_payment: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class SpeedboatViewSet(viewsets.ModelViewSet):
     serializer_class = SpeedboatSerializer
     permission_classes = [IsAuthenticated]
@@ -395,17 +447,12 @@ class MarketplaceQuoteViewSet(viewsets.ModelViewSet):
         
         operator = request.user.operator_profile
         
-        if operator.verification_status != 'verified':
-            return Response({'error': 'Operator not verified'}, 
+        # Allow if within first 30 days OR subscription active
+        from datetime import date
+        days_since = (date.today() - operator.created_at.date()).days
+        if days_since > 30 and operator.subscription_status != 'active':
+            return Response({'error': 'Subscription expired. Please renew to submit quotes.'}, 
                           status=status.HTTP_403_FORBIDDEN)
-        
-        if operator.subscription_status != 'active':
-            # Allow if within first 30 days (free trial)
-            from datetime import date
-            days_since = (date.today() - operator.created_at.date()).days
-            if days_since > 30:
-                return Response({'error': 'Subscription expired. Please renew to submit quotes.'}, 
-                              status=status.HTTP_403_FORBIDDEN)
         
         trip_request_id = request.data.get('trip_request_id')
         trip_request = get_object_or_404(TripRequest, id=trip_request_id)

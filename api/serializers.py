@@ -26,9 +26,9 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = ['email', 'phone_number', 'password', 'first_name', 'last_name', 'user_type']
     
     def validate_email(self, value):
-        if value and User.objects.filter(email=value).exists():
+        if value and User.objects.filter(email__iexact=value).exists():
             raise serializers.ValidationError("An account with this email already exists.")
-        return value
+        return value.lower() if value else value
     
     def validate_phone_number(self, value):
         if value and User.objects.filter(phone_number=value).exists():
@@ -42,7 +42,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         
         # Set username to email or phone_number
         if email:
-            validated_data['username'] = email
+            validated_data['username'] = email.lower()
         elif phone_number:
             validated_data['username'] = phone_number
         else:

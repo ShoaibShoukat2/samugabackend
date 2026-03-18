@@ -40,6 +40,7 @@ urlpatterns = [
     path('auth/send-otp/', AuthViewSet.as_view({'post': 'send_otp'}), name='auth-send-otp'),
     path('auth/verify-otp/', AuthViewSet.as_view({'post': 'verify_otp'}), name='auth-verify-otp'),
     path('auth/update-profile/', AuthViewSet.as_view({'post': 'update_profile', 'put': 'update_profile'}), name='auth-update-profile'),
+    path('auth/check-account/', AuthViewSet.as_view({'post': 'check_account'}), name='auth-check-account'),
     path('dashboard/stats/', dashboard_stats, name='dashboard-stats'),
     
     # Admin panel views
