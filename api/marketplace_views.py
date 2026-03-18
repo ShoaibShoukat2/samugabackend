@@ -454,6 +454,9 @@ class MarketplaceQuoteViewSet(viewsets.ModelViewSet):
                 valid_until=timezone.now() + timedelta(days=7),
                 commission_rate=Decimal('5.00'),
                 commission_amount=commission_amount,
+                bank_name=request.data.get('bank_name', ''),
+                account_number=request.data.get('account_number', ''),
+                account_name=request.data.get('account_name', ''),
             )
         except Exception as e:
             return Response({'error': f'Failed to create quote: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)

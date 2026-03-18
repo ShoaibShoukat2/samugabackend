@@ -176,6 +176,11 @@ class Quote(models.Model):
     status = models.CharField(max_length=20, choices=QUOTE_STATUS, default='pending')
     valid_until = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
+
+    # Operator bank details for payment
+    bank_name = models.CharField(max_length=100, blank=True)
+    account_number = models.CharField(max_length=100, blank=True)
+    account_name = models.CharField(max_length=255, blank=True)
     
     # Commission tracking
     commission_rate = models.DecimalField(max_digits=5, decimal_places=2, default=5.00)  # 5%
