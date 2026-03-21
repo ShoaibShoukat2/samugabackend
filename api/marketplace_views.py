@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.db import models
 from datetime import timedelta
 from .models import (SpeedboatOperator, Speedboat, Quote, TripRequest, 
-                    OperatorSubscription, OperatorRating, PlatformRevenue)
+                    OperatorSubscription, OperatorRating, PlatformRevenue, PlatformSettings)
 from .serializers import (SpeedboatOperatorSerializer, SpeedboatSerializer, 
                          QuoteSerializer, OperatorSubscriptionSerializer, OperatorRatingSerializer)
 
@@ -45,13 +45,14 @@ class SpeedboatOperatorViewSet(viewsets.ModelViewSet):
                 # Grant FREE first month subscription automatically
                 from datetime import date
                 from dateutil.relativedelta import relativedelta
+                settings = PlatformSettings.get()
                 today = date.today()
-                free_end = today + relativedelta(months=1) - timezone.timedelta(days=1)
+                free_end = today + timedelta(days=settings.free_trial_days - 1)
 
                 OperatorSubscription.objects.create(
                     operator=operator,
                     plan='basic',
-                    amount=0,  # Free
+                    amount=0,  # Free trial
                     start_date=today,
                     end_date=free_end,
                     payment_status='paid',
@@ -65,13 +66,13 @@ class SpeedboatOperatorViewSet(viewsets.ModelViewSet):
                 ).replace(tzinfo=timezone.get_current_timezone())
                 operator.save()
 
-                print(f"✅ Free 1-month subscription granted to {operator.company_name} until {free_end}")
+                print(f"✅ Free {settings.free_trial_days}-day trial granted to {operator.company_name} until {free_end}")
 
                 return Response({
                     **serializer.data,
                     'free_trial': True,
                     'trial_ends': str(free_end),
-                    'message': 'Welcome! Your first month is FREE. Subscription starts from month 2.'
+                    'message': f'Welcome! Your first {settings.free_trial_days} days are FREE. Subscription required after that.'
                 }, status=status.HTTP_201_CREATED)
             else:
                 print(f"❌ Operator registration validation errors: {serializer.errors}")
@@ -102,9 +103,9 @@ class SpeedboatOperatorViewSet(viewsets.ModelViewSet):
             end_date__gte=timezone.now().date()
         ).first()
         
-        # Calculate earnings (commission-based)
+        # Calculate earnings (full amount — no commission deducted)
         total_earnings = sum([
-            quote.amount - (quote.commission_amount or 0) 
+            float(quote.amount)
             for quote in operator.quotes.filter(status='accepted')
         ])
         
@@ -132,12 +133,13 @@ class SpeedboatOperatorViewSet(viewsets.ModelViewSet):
             operator = self.get_object()
 
             from datetime import date
+            settings = PlatformSettings.get()
             days_since_registration = (date.today() - operator.created_at.date()).days
 
-            if days_since_registration > 30 and operator.subscription_status != 'active':
+            if days_since_registration > settings.free_trial_days and operator.subscription_status != 'active':
                 return Response({
                     'error': 'Subscription not active',
-                    'detail': 'Your free trial has ended. Please activate your subscription to access trip requests.'
+                    'detail': f'Your {settings.free_trial_days}-day free trial has ended. Please activate your subscription.'
                 }, status=status.HTTP_403_FORBIDDEN)
 
             from .serializers import TripRequestSerializer
@@ -272,17 +274,9 @@ class SpeedboatOperatorViewSet(viewsets.ModelViewSet):
             trip.status = 'completed'
             trip.save()
 
-            # Record platform revenue (commission)
+            # Record subscription revenue (no commission in subscription model)
             from .models import PlatformRevenue
-            PlatformRevenue.objects.get_or_create(
-                booking=trip.booking if hasattr(trip, 'booking') else None,
-                defaults={
-                    'revenue_type': 'commission',
-                    'amount': my_accepted_quote.commission_amount or 0,
-                    'currency': my_accepted_quote.currency,
-                    'description': f'Commission from {operator.company_name} for trip {trip.id}',
-                }
-            )
+            # Revenue is tracked via subscription payments, not per-trip commission
 
             # Notify customer
             from .models import Notification
@@ -447,11 +441,12 @@ class MarketplaceQuoteViewSet(viewsets.ModelViewSet):
         
         operator = request.user.operator_profile
         
-        # Allow if within first 30 days OR subscription active
+        # Allow if within free trial period OR subscription active
         from datetime import date
+        settings = PlatformSettings.get()
         days_since = (date.today() - operator.created_at.date()).days
-        if days_since > 30 and operator.subscription_status != 'active':
-            return Response({'error': 'Subscription expired. Please renew to submit quotes.'}, 
+        if days_since > settings.free_trial_days and operator.subscription_status != 'active':
+            return Response({'error': f'Free trial ended. Please subscribe to submit quotes.'}, 
                           status=status.HTTP_403_FORBIDDEN)
         
         trip_request_id = request.data.get('trip_request_id')
@@ -487,7 +482,6 @@ class MarketplaceQuoteViewSet(viewsets.ModelViewSet):
 
             from decimal import Decimal
             amount_decimal = Decimal(str(amount))
-            commission_amount = (amount_decimal * Decimal('5')) / Decimal('100')
 
             quote = Quote.objects.create(
                 trip_request=trip_request,
@@ -499,8 +493,8 @@ class MarketplaceQuoteViewSet(viewsets.ModelViewSet):
                 notes=notes,
                 status='pending',
                 valid_until=timezone.now() + timedelta(days=7),
-                commission_rate=Decimal('5.00'),
-                commission_amount=commission_amount,
+                commission_rate=Decimal('0.00'),
+                commission_amount=Decimal('0.00'),
                 bank_name=request.data.get('bank_name', ''),
                 account_number=request.data.get('account_number', ''),
                 account_name=request.data.get('account_name', ''),
@@ -685,7 +679,7 @@ class OperatorSubscriptionViewSet(viewsets.ModelViewSet):
             operator=operator,
             start_date=start_date,
             end_date=end_date,
-            amount=450.00,  # MVR
+            amount=PlatformSettings.get().subscription_price,
             payment_status='pending'
         )
         

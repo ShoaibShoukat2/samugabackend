@@ -6,7 +6,7 @@ from django.utils import timezone
 from datetime import timedelta
 from .models import (User, TripRequest, Quote, Payment, Booking, SupportMessage, 
                     Notification, SpeedboatOperator, Speedboat, OperatorSubscription, 
-                    OperatorRating, PlatformRevenue)
+                    OperatorRating, PlatformRevenue, PlatformSettings)
 from decimal import Decimal
 
 def is_admin(user):
@@ -558,17 +558,28 @@ def verify_operator(request, operator_id):
 @user_passes_test(is_admin)
 def subscriptions_list(request):
     status_filter = request.GET.get('status', 'all')
-    
-    subscriptions = OperatorSubscription.objects.select_related('operator').order_by('-created_at')
-    
+    settings = PlatformSettings.get()
+
+    subscriptions = OperatorSubscription.objects.select_related('operator__user').order_by('-created_at')
+
     if status_filter != 'all':
         subscriptions = subscriptions.filter(payment_status=status_filter)
-    
+
+    # Stats
+    total_paid = OperatorSubscription.objects.filter(payment_status='paid').count()
+    total_pending = OperatorSubscription.objects.filter(payment_status='pending').count()
+    total_revenue = OperatorSubscription.objects.filter(payment_status='paid').aggregate(
+        total=Sum('amount'))['total'] or 0
+
     context = {
         'subscriptions': subscriptions,
         'status_filter': status_filter,
+        'settings': settings,
+        'total_paid': total_paid,
+        'total_pending': total_pending,
+        'total_revenue': total_revenue,
     }
-    
+
     return render(request, 'admin_panel/subscriptions.html', context)
 
 @login_required
@@ -587,7 +598,10 @@ def verify_subscription(request, subscription_id):
             # Update operator subscription status
             operator = subscription.operator
             operator.subscription_status = 'active'
-            operator.subscription_expires_at = subscription.end_date
+            operator.subscription_expires_at = timezone.datetime.combine(
+                subscription.end_date,
+                timezone.datetime.min.time()
+            ).replace(tzinfo=timezone.get_current_timezone())
             operator.save()
             
             # Create revenue record
@@ -664,61 +678,59 @@ def marketplace_quotes(request):
 @login_required
 @user_passes_test(is_admin)
 def revenue_dashboard(request):
-    # Monthly revenue breakdown
     current_month = timezone.now().month
     current_year = timezone.now().year
-    
+
     subscription_revenue = PlatformRevenue.objects.filter(
         revenue_type='subscription',
         created_at__month=current_month,
         created_at__year=current_year
     ).aggregate(total=Sum('amount'))['total'] or 0
-    
-    commission_revenue = PlatformRevenue.objects.filter(
-        revenue_type='commission',
-        created_at__month=current_month,
-        created_at__year=current_year
-    ).aggregate(total=Sum('amount'))['total'] or 0
-    
+
     # Recent revenue records
-    recent_revenues = PlatformRevenue.objects.select_related('subscription__operator', 'booking__trip_request').order_by('-created_at')[:20]
-    
-    # Operator subscription summary
+    recent_revenues = PlatformRevenue.objects.select_related(
+        'subscription__operator'
+    ).order_by('-created_at')[:20]
+
     active_operators = SpeedboatOperator.objects.filter(subscription_status='active').count()
     expired_operators = SpeedboatOperator.objects.filter(subscription_status='expired').count()
-    
-    # Projected monthly revenue
-    projected_subscription = active_operators * 450  # 450 MVR per operator
-    
+
+    settings = PlatformSettings.get()
+    projected_subscription = active_operators * settings.subscription_price
+
     context = {
         'subscription_revenue': subscription_revenue,
-        'commission_revenue': commission_revenue,
-        'total_monthly_revenue': subscription_revenue + commission_revenue,
+        'total_monthly_revenue': subscription_revenue,
         'recent_revenues': recent_revenues,
         'active_operators': active_operators,
         'expired_operators': expired_operators,
         'projected_subscription': projected_subscription,
+        'settings': settings,
     }
-    
+
     return render(request, 'admin_panel/revenue_dashboard.html', context)
 
 @login_required
 @user_passes_test(is_admin)
 def platform_settings(request):
+    settings = PlatformSettings.get()
+
     if request.method == 'POST':
-        # Handle platform settings updates
-        commission_rate = request.POST.get('commission_rate', '5.0')
         subscription_fee = request.POST.get('subscription_fee', '450.0')
-        
-        # You can store these in a settings model or configuration
-        messages.success(request, 'Platform settings updated successfully!')
+        free_trial_days = request.POST.get('free_trial_days', '30')
+        try:
+            settings.subscription_price = Decimal(subscription_fee)
+            settings.free_trial_days = int(free_trial_days)
+            settings.updated_by = request.user
+            settings.save()
+            messages.success(request, 'Platform settings updated successfully!')
+        except Exception as e:
+            messages.error(request, f'Error saving settings: {e}')
         return redirect('admin_platform_settings')
-    
+
     context = {
-        'commission_rate': 5.0,  # Default values
-        'subscription_fee': 450.0,
+        'settings': settings,
     }
-    
     return render(request, 'admin_panel/platform_settings.html', context)
 
 

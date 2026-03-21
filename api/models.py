@@ -182,17 +182,14 @@ class Quote(models.Model):
     account_number = models.CharField(max_length=100, blank=True)
     account_name = models.CharField(max_length=255, blank=True)
     
-    # Commission tracking
-    commission_rate = models.DecimalField(max_digits=5, decimal_places=2, default=5.00)  # 5%
+    # Commission tracking (kept for legacy, not used in subscription model)
+    commission_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
     commission_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     
     def save(self, *args, **kwargs):
-        # Calculate commission amount
-        if self.amount and self.commission_rate:
-            # Ensure both values are Decimal to avoid float multiplication
-            amount_decimal = Decimal(str(self.amount))
-            rate_decimal = Decimal(str(self.commission_rate))
-            self.commission_amount = (amount_decimal * rate_decimal) / Decimal('100')
+        # Commission disabled — subscription-only model
+        self.commission_rate = Decimal('0.00')
+        self.commission_amount = Decimal('0.00')
         super().save(*args, **kwargs)
     
     def __str__(self):
@@ -306,6 +303,26 @@ class PlatformRevenue(models.Model):
     
     def __str__(self):
         return f"{self.revenue_type} - {self.currency} {self.amount}"
+
+class PlatformSettings(models.Model):
+    """Singleton model — admin configures subscription price and other platform settings."""
+    subscription_price = models.DecimalField(max_digits=10, decimal_places=2, default=450.00, help_text="Monthly subscription price in MVR")
+    free_trial_days = models.IntegerField(default=30, help_text="Free trial period in days for new operators")
+    updated_at = models.DateTimeField(auto_now=True)
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Platform Settings"
+
+    def __str__(self):
+        return f"Platform Settings (MVR {self.subscription_price}/month, {self.free_trial_days} day trial)"
+
+    @classmethod
+    def get(cls):
+        """Always returns the single settings instance, creating it if needed."""
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
 
 class SupportMessage(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
