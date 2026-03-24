@@ -136,7 +136,17 @@ class SpeedboatOperatorViewSet(viewsets.ModelViewSet):
             settings = PlatformSettings.get()
             days_since_registration = (date.today() - operator.created_at.date()).days
 
-            if days_since_registration > settings.free_trial_days and operator.subscription_status != 'active':
+            # Auto-expire subscription if past expiry date
+            if (operator.subscription_status == 'active' and
+                    operator.subscription_expires_at and
+                    operator.subscription_expires_at.date() < date.today()):
+                operator.subscription_status = 'expired'
+                operator.save(update_fields=['subscription_status'])
+
+            within_trial = days_since_registration <= settings.free_trial_days
+            subscription_active = operator.subscription_status == 'active'
+
+            if not within_trial and not subscription_active:
                 return Response({
                     'error': 'Subscription not active',
                     'detail': f'Your {settings.free_trial_days}-day free trial has ended. Please activate your subscription.'
@@ -445,8 +455,19 @@ class MarketplaceQuoteViewSet(viewsets.ModelViewSet):
         from datetime import date
         settings = PlatformSettings.get()
         days_since = (date.today() - operator.created_at.date()).days
-        if days_since > settings.free_trial_days and operator.subscription_status != 'active':
-            return Response({'error': f'Free trial ended. Please subscribe to submit quotes.'}, 
+
+        # Auto-expire if past expiry date
+        if (operator.subscription_status == 'active' and
+                operator.subscription_expires_at and
+                operator.subscription_expires_at.date() < date.today()):
+            operator.subscription_status = 'expired'
+            operator.save(update_fields=['subscription_status'])
+
+        within_trial = days_since <= settings.free_trial_days
+        subscription_active = operator.subscription_status == 'active'
+
+        if not within_trial and not subscription_active:
+            return Response({'error': 'Free trial ended. Please subscribe to submit quotes.'},
                           status=status.HTTP_403_FORBIDDEN)
         
         trip_request_id = request.data.get('trip_request_id')
