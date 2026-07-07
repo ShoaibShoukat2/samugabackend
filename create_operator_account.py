@@ -51,6 +51,7 @@ if hasattr(user, 'operator_profile'):
     print(f"✅ Operator profile: {operator.company_name} | {operator.verification_status} | {operator.subscription_status}")
 else:
     print("➕ Creating operator profile...")
+    from datetime import timedelta
     operator = SpeedboatOperator.objects.create(
         user=user,
         company_name=COMPANY_NAME,
@@ -60,6 +61,7 @@ else:
         service_islands=SERVICE_ISLANDS,
         verification_status='verified',
         subscription_status='active',
+        subscription_expires_at=timezone.now() + timedelta(days=30),
     )
     print(f"✅ Operator profile created: {operator.company_name}")
 
