@@ -229,16 +229,98 @@ class Payment(models.Model):
         return f"Payment {self.id} - {self.payment_method} - {self.currency} {self.amount}"
 
 class Booking(models.Model):
+    BOOKING_STATUS = [
+        ('pending_payment', 'Pending Payment'),
+        ('pending_confirmation', 'Pending Confirmation'),
+        ('confirmed', 'Confirmed'),
+        ('cancelled', 'Cancelled'),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     trip_request = models.OneToOneField(TripRequest, on_delete=models.CASCADE, related_name='booking')
     selected_quote = models.OneToOneField(Quote, on_delete=models.CASCADE, related_name='booking', null=True, blank=True)
+    schedule = models.ForeignKey('Schedule', on_delete=models.SET_NULL, null=True, blank=True, related_name='bookings')
     booking_code = models.CharField(max_length=20, unique=True)
+    status = models.CharField(max_length=30, choices=BOOKING_STATUS, default='pending_payment')
+    ticket_url = models.URLField(blank=True, default='')
     qr_code = models.ImageField(upload_to='qr_codes/', null=True, blank=True)
     e_ticket = models.FileField(upload_to='e_tickets/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
         return f"Booking {self.booking_code}"
+
+
+class Schedule(models.Model):
+    RUN_DAYS = [
+        ('daily', 'Daily'),
+        ('sat-thu', 'Sat-Thu'),
+        ('fri', 'Fridays'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    operator = models.ForeignKey(SpeedboatOperator, on_delete=models.CASCADE, related_name='schedules')
+    boat = models.ForeignKey(Speedboat, on_delete=models.SET_NULL, null=True, blank=True, related_name='schedules')
+    route_from = models.CharField(max_length=255)
+    route_to = models.CharField(max_length=255)
+    sched_stops = models.JSONField(default=list, blank=True)
+    departure_time = models.TimeField(default='09:00:00')
+    price_per_seat = models.DecimalField(max_digits=10, decimal_places=2, default=350)
+    available_seats = models.IntegerField(default=20)
+    run_days = models.CharField(max_length=20, choices=RUN_DAYS, default='daily')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.route_from} → {self.route_to} @ {self.departure_time}"
+
+
+class BoatRequest(models.Model):
+    STATUS_CHOICES = [
+        ('open', 'Open'),
+        ('operators_pinged', 'Operators Pinged'),
+        ('offer_received', 'Offer Received'),
+        ('assigned', 'Assigned'),
+        ('confirmed', 'Confirmed'),
+        ('closed', 'Closed'),
+        ('cancelled', 'Cancelled'),
+    ]
+    TRIP_TYPES = [('oneway', 'One-way'), ('return', 'Return')]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    request_ref = models.CharField(max_length=30, unique=True)
+    customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='boat_requests')
+    route_from = models.CharField(max_length=255)
+    route_to = models.CharField(max_length=255)
+    travel_date = models.DateField()
+    preferred_time = models.CharField(max_length=100, blank=True, default='Flexible')
+    passenger_count = models.IntegerField(default=1)
+    trip_type = models.CharField(max_length=20, choices=TRIP_TYPES, default='oneway')
+    contact_number = models.CharField(max_length=20)
+    pickup_jetty = models.CharField(max_length=255, blank=True)
+    notes = models.TextField(blank=True)
+    customer_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    assigned_operator = models.ForeignKey(SpeedboatOperator, on_delete=models.SET_NULL, null=True, blank=True)
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='open')
+    linked_trip = models.OneToOneField(TripRequest, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.request_ref
+
+
+class Passenger(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    trip_request = models.ForeignKey(TripRequest, on_delete=models.CASCADE, related_name='passengers')
+    name = models.CharField(max_length=255)
+    nationality_id = models.CharField(max_length=100, blank=True)
+    order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ['order']
+
+    def __str__(self):
+        return self.name
 
 class OperatorSubscription(models.Model):
     SUBSCRIPTION_PLANS = [
@@ -308,6 +390,10 @@ class PlatformSettings(models.Model):
     """Singleton model — admin configures subscription price and other platform settings."""
     subscription_price = models.DecimalField(max_digits=10, decimal_places=2, default=450.00, help_text="Monthly subscription price in MVR")
     free_trial_days = models.IntegerField(default=30, help_text="Free trial period in days for new operators")
+    bml_account = models.CharField(max_length=100, blank=True, default='7730000012345')
+    mib_account = models.CharField(max_length=100, blank=True, default='7730000012345')
+    assist_greeting = models.TextField(blank=True, default="Hi! I'm Samuga Assist. How can I help you today?")
+    assist_avatar_url = models.URLField(blank=True, default='')
     updated_at = models.DateTimeField(auto_now=True)
     updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
 

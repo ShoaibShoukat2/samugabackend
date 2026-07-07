@@ -9,6 +9,11 @@ from .marketplace_views import (
     OperatorSubscriptionViewSet, OperatorRatingViewSet
 )
 from .auth_views import admin_login_view, admin_logout_view
+from .spec_views import (
+    places_search, search_boats, ferry_operators, submit_booking, my_bookings,
+    invoice_detail, upload_slip, booking_status, create_boat_request, my_boat_requests,
+    profile_view, support_ask, support_human, assist_settings,
+)
 from .admin_views import (
     admin_dashboard, trip_requests_list, send_quote_view, payments_list,
     verify_payment, bookings_list, support_messages, send_support_reply, users_list,
@@ -44,6 +49,22 @@ urlpatterns = [
     path('auth/update-profile/', AuthViewSet.as_view({'post': 'update_profile', 'put': 'update_profile'}), name='auth-update-profile'),
     path('auth/check-account/', AuthViewSet.as_view({'post': 'check_account'}), name='auth-check-account'),
     path('dashboard/stats/', dashboard_stats, name='dashboard-stats'),
+
+    # Spec-aligned native app endpoints
+    path('places/', places_search, name='places-search'),
+    path('search/', search_boats, name='search-boats'),
+    path('ferry-operators/', ferry_operators, name='ferry-operators'),
+    path('submit-booking/', submit_booking, name='submit-booking'),
+    path('my-bookings/', my_bookings, name='my-bookings'),
+    path('invoice/<str:ref>/', invoice_detail, name='invoice-detail'),
+    path('invoice/<str:ref>/upload-slip/', upload_slip, name='upload-slip'),
+    path('booking-status/<str:ref>/', booking_status, name='booking-status'),
+    path('boat-requests/', create_boat_request, name='boat-requests-create'),
+    path('boat-requests/my/', my_boat_requests, name='boat-requests-my'),
+    path('profile/', profile_view, name='profile'),
+    path('support/ask/', support_ask, name='support-ask'),
+    path('support/human-request/', support_human, name='support-human'),
+    path('assist-settings/', assist_settings, name='assist-settings'),
     
     # Admin panel views
     path('admin-panel/login/', admin_login_view, name='admin_login'),
