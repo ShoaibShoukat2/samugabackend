@@ -185,7 +185,7 @@ class SpeedboatOperatorViewSet(viewsets.ModelViewSet):
                 my_quote = trip.quotes.filter(operator=operator).first()
                 accepted_quote = trip.quotes.filter(status='accepted').first()
 
-                trip_data = TripRequestSerializer(trip).data
+                trip_data = TripRequestSerializer(trip, context={'request': request}).data
                 trip_data['my_quote'] = None
                 trip_data['is_taken'] = False
                 trip_data['taken_by'] = None
@@ -209,7 +209,7 @@ class SpeedboatOperatorViewSet(viewsets.ModelViewSet):
             # Add my accepted/ongoing trips
             for trip in my_accepted_trips:
                 my_quote = trip.quotes.filter(operator=operator, status='accepted').first()
-                trip_data = TripRequestSerializer(trip).data
+                trip_data = TripRequestSerializer(trip, context={'request': request}).data
                 trip_data['my_quote'] = None
                 trip_data['is_taken'] = False
                 trip_data['taken_by'] = operator.company_name
