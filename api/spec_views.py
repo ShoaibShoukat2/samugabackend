@@ -4,12 +4,17 @@ Maps to ferry schedules, boat requests, invoices, and assist features.
 """
 from datetime import datetime, timedelta, time as dt_time
 from decimal import Decimal
+import json
+import os
 import random
 import re
+import urllib.error
+import urllib.request
 
 from django.db import transaction
 from django.db.models import Sum, Q
 from django.utils import timezone
+from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
@@ -464,21 +469,34 @@ def profile_view(request):
     return Response(UserSerializer(user, context={'request': request}).data)
 
 
+def handle_support_ask(request):
+    message = (request.data.get('message') or '').strip()
+    if not message:
+        return Response({'reply': 'Please type a question about routes, bookings, tickets, or private boats.'})
+    SupportMessage.objects.create(user=request.user, message=f'[Samuga Assist] {message}')
+    reply = _assist_reply(message, request.user)
+    if not reply or reply.strip().lower() == message.lower():
+        reply = _fallback_assist_reply(message, request.user)
+    SupportMessage.objects.create(user=request.user, message=reply, is_admin_reply=True)
+    return Response({'reply': reply})
+
+
+def handle_human_support(request):
+    msg = request.data.get('message', 'Customer requested human support')
+    SupportMessage.objects.create(user=request.user, message=f'[Human Support Request] {msg}')
+    return Response({'reply': 'Support request sent. We will contact you on Telegram.', 'message': 'Support request sent. We will contact you on Telegram.'})
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def support_ask(request):
-    message = request.data.get('message', '')
-    SupportMessage.objects.create(user=request.user, message=f'[Samuga Assist] {message}')
-    reply = _assist_reply(message, request.user)
-    return Response({'reply': reply, 'message': reply})
+    return handle_support_ask(request)
 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def support_human(request):
-    msg = request.data.get('message', 'Customer requested human support')
-    SupportMessage.objects.create(user=request.user, message=f'[Human Support Request] {msg}')
-    return Response({'message': 'Support request sent. We will contact you on Telegram.'})
+    return handle_human_support(request)
 
 
 @api_view(['GET'])
@@ -488,15 +506,211 @@ def assist_settings(request):
     return Response({'greeting': s.assist_greeting, 'avatar_url': s.assist_avatar_url})
 
 
-def _assist_reply(message: str, user: User) -> str:
+ISLAND_ALIASES = {
+    'male': 'Malé City',
+    'malé': 'Malé City',
+    'mle': 'Malé City',
+    'airport': 'Velana International Airport (Malé)',
+    'via': 'Velana International Airport (Malé)',
+    'hulhule': 'Velana International Airport (Malé)',
+    'hulhumale': 'Hulhumalé',
+    'hulhumalé': 'Hulhumalé',
+    'maafushi': 'Maafushi Island',
+    'thulusdhoo': 'Thulusdhoo Island',
+    'guraidhoo': 'Guraidhoo Island',
+    'dhiffushi': 'Dhiffushi Island',
+    'rasdhoo': 'Rasdhoo Island',
+    'ukulhas': 'Ukulhas Island',
+    'fulidhoo': 'Fulidhoo Island',
+    'dhigurah': 'Dhigurah Island',
+    'addu': 'Addu City',
+    'gan': 'Gan Island',
+    'villingili': 'Villingili Ferry Terminal',
+    'naifaru': 'Naifaru Island',
+    'dharavandhoo': 'Dharavandhoo Island',
+    'fuvahmulah': 'Fuvahmulah Island',
+}
+
+
+def _extract_islands(message: str):
     q = message.lower()
-    upcoming = TripRequest.objects.filter(user=user, status__in=['accepted', 'payment_pending', 'confirmed']).count()
-    if 'book' in q or 'search' in q:
-        return 'Open Search tab, pick FROM and TO islands, choose a date, and tap Book this boat.'
-    if 'pay' in q:
-        return 'Go to My Trips → Active & Pending → Tap to Pay, transfer the exact MVR amount, upload your slip.'
-    if 'ticket' in q or 'qr' in q:
-        return 'Confirmed trips appear under Upcoming. Tap View Ticket for your boarding QR code.'
+    found = []
+    for alias, place in ISLAND_ALIASES.items():
+        if re.search(rf'\b{re.escape(alias)}\b', q) and place not in found:
+            found.append(place)
+    for place in MALDIVES_PLACES:
+        key = place.split('(')[0].replace('Island', '').replace('City', '').replace('Ferry Terminal', '').strip().lower()
+        if len(key) >= 4 and key in q and place not in found:
+            found.append(place)
+    return found[:2]
+
+
+def _route_assist_reply(message: str):
+    q = message.lower()
+    islands = _extract_islands(message)
+    from_name = to_name = None
+    m = re.search(r'(.+?)\s+(?:to|se|→|->)\s+(.+)', q, re.I)
+    if m and len(islands) >= 2:
+        from_name, to_name = islands[0], islands[1]
+    elif len(islands) == 2:
+        from_name, to_name = islands[0], islands[1]
+    elif len(islands) == 1 and any(w in q for w in ('to ', 'from ', 'ferry', 'boat', 'route', 'jaana', 'jana')):
+        to_name = islands[0]
+        from_name = 'Malé City'
+
+    if not from_name and not to_name:
+        return None
+
+    _ensure_schedules()
+    travel_date = timezone.now().date()
+    schedules = Schedule.objects.filter(is_active=True).select_related('operator', 'boat')
+    if from_name:
+        key = from_name.split()[0]
+        schedules = schedules.filter(Q(route_from__icontains=key) | Q(sched_stops__icontains=key))
+    if to_name:
+        key = to_name.split()[0]
+        schedules = schedules.filter(Q(route_to__icontains=key) | Q(sched_stops__icontains=key))
+
+    lines = []
+    for s in schedules[:4]:
+        if not _run_day_matches(s.run_days, travel_date):
+            continue
+        taken = _seats_booked(s, travel_date)
+        seats = max(0, s.available_seats - taken)
+        lines.append(
+            f"• {s.route_from} → {s.route_to} at {s.departure_time.strftime('%H:%M')} — "
+            f"MVR {s.price_per_seat:.0f}/seat ({seats} seats), {s.operator.company_name}"
+        )
+    if lines:
+        dest = to_name or from_name
+        return (
+            f"I found boats for {dest}:\n" + '\n'.join(lines)
+            + '\n\nOpen Search, pick FROM/TO and a date, then tap Book this boat.'
+        )
+    dest = f'{from_name} to {to_name}' if from_name and to_name else (to_name or from_name)
+    return (
+        f'No public schedule is listed right now for {dest}. '
+        'Use Search to check other dates, or Home → Private Hire for a private boat.'
+    )
+
+
+def _llm_assist_reply(message: str, user: User):
+    gemini_key = os.environ.get('GEMINI_API_KEY') or getattr(settings, 'GEMINI_API_KEY', '')
+    openai_key = os.environ.get('OPENAI_API_KEY') or getattr(settings, 'OPENAI_API_KEY', '')
+    upcoming = TripRequest.objects.filter(
+        user=user, status__in=['accepted', 'payment_pending', 'confirmed']
+    ).count()
+    system = (
+        'You are Samuga Assist for SamugaTravels, a Maldives boat and ferry booking app. '
+        'Answer in the same language the user used (English, Dhivehi, or Urdu/Roman Urdu). '
+        'Keep replies under 80 words. Help with routes, seat bookings, payments (MVR bank transfer + slip), '
+        'boarding QR tickets, and private boat hire. '
+        f'The customer is {user.first_name or "a guest"} with {upcoming} active booking(s). '
+        'App steps: Search tab → FROM/TO/date → Book this boat. Pay: My Trips → Active & Pending → Tap to Pay. '
+        'Tickets: Upcoming → View Ticket. Private hire: Home → Private Hire. '
+        'Never repeat the user message back as the answer.'
+    )
+    if gemini_key:
+        body = json.dumps({
+            'system_instruction': {'parts': [{'text': system}]},
+            'contents': [{'parts': [{'text': message}]}],
+            'generationConfig': {'temperature': 0.4, 'maxOutputTokens': 220},
+        }).encode()
+        req = urllib.request.Request(
+            f'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={gemini_key}',
+            data=body,
+            headers={'Content-Type': 'application/json'},
+            method='POST',
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=12) as resp:
+                data = json.loads(resp.read().decode())
+            text = (
+                data.get('candidates', [{}])[0]
+                .get('content', {})
+                .get('parts', [{}])[0]
+                .get('text', '')
+                .strip()
+            )
+            if text and text.lower() != message.lower():
+                return text
+        except (urllib.error.URLError, TimeoutError, KeyError, IndexError, json.JSONDecodeError, OSError):
+            return None
+
+    if openai_key:
+        body = json.dumps({
+            'model': 'gpt-4o-mini',
+            'messages': [
+                {'role': 'system', 'content': system},
+                {'role': 'user', 'content': message},
+            ],
+            'max_tokens': 220,
+            'temperature': 0.4,
+        }).encode()
+        req = urllib.request.Request(
+            'https://api.openai.com/v1/chat/completions',
+            data=body,
+            headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {openai_key}'},
+            method='POST',
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=12) as resp:
+                data = json.loads(resp.read().decode())
+            text = (data.get('choices', [{}])[0].get('message', {}) or {}).get('content', '').strip()
+            if text and text.lower() != message.lower():
+                return text
+        except (urllib.error.URLError, TimeoutError, KeyError, IndexError, json.JSONDecodeError, OSError):
+            return None
+    return None
+
+
+def _fallback_assist_reply(message: str, user: User) -> str:
+    q = message.lower()
+    upcoming = TripRequest.objects.filter(
+        user=user, status__in=['accepted', 'payment_pending', 'confirmed']
+    ).count()
+
+    route_reply = _route_assist_reply(message)
+    if route_reply:
+        return route_reply
+
+    if any(w in q for w in ('salam', 'salaam', 'hello', 'hi ', 'hey', 'assalam')):
+        name = user.first_name or 'there'
+        extra = f' You have {upcoming} active booking(s).' if upcoming else ''
+        return f"Hi {name}! I'm Samuga Assist.{extra} Ask me about routes, bookings, payments, tickets, or private boats."
+
+    if any(w in q for w in ('book', 'search', 'seat', 'reserve', 'booking')):
+        return 'Use the Search tab → pick FROM and TO islands → choose a date → tap Book this boat. For a whole boat, go Home → Private Hire.'
+
+    if any(w in q for w in ('pay', 'payment', 'slip', 'transfer', 'mvr', 'bank')):
+        return 'Go to My Trips → Active & Pending → Tap to Pay. Transfer the exact MVR amount to the shown account, then upload your bank slip.'
+
+    if any(w in q for w in ('ticket', 'qr', 'boarding', 'check in', 'check-in')):
+        return 'Confirmed trips appear under My Trips → Upcoming. Tap View Ticket to show your boarding QR at the jetty.'
+
+    if any(w in q for w in ('cancel', 'refund', 'change')):
+        return 'For cancellations or refunds please tap Talk to Support so a human agent can help.'
+
+    if any(w in q for w in ('private', 'hire', 'charter', 'whole boat', 'speedboat')):
+        return 'For a private speedboat, open Home → Private Hire, enter your route, date, and passenger count. Operators will send quotes.'
+
+    if any(w in q for w in ('price', 'cost', 'kitna', 'keemat', 'fare', 'how much')):
+        return 'Seat prices depend on the route and boat. Search FROM/TO and a date to see live MVR fares. Private hire quotes come from operators after you submit a request.'
+
+    if any(w in q for w in ('ferry', 'schedule', 'time', 'departure')):
+        return 'Open Search or Ferries to see today’s departures, times, and seats. Tell me a route like “Male to Maafushi” and I will check it.'
+
     if upcoming:
-        return f'You have {upcoming} active booking(s). Ask me about payment, tickets, or routes.'
-    return PlatformSettings.get().assist_greeting or 'How can I help you with your Maldives trip?'
+        return f'You have {upcoming} active booking(s). I can help with payment, tickets, or finding another route. What do you need?'
+
+    return (
+        'I can help with searching routes, booking seats, payments, tickets, and private boat requests. '
+        'Try “Male to Maafushi”, “how do I pay?”, or tap Talk to Support for a human.'
+    )
+
+
+def _assist_reply(message: str, user: User) -> str:
+    llm = _llm_assist_reply(message, user)
+    if llm:
+        return llm
+    return _fallback_assist_reply(message, user)

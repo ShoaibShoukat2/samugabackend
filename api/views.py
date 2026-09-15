@@ -234,6 +234,51 @@ class AuthViewSet(viewsets.ViewSet):
             })
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=['delete'], permission_classes=[IsAuthenticated])
+    def delete_account(self, request):
+        """Permanently delete the authenticated user's account and all associated data."""
+        user = request.user
+
+        # Prevent admin accounts from being deleted via this endpoint
+        if user.is_admin:
+            return Response(
+                {'error': 'Admin accounts cannot be deleted via this endpoint.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Password confirmation for email/password accounts
+        password = request.data.get('password')
+        if user.has_usable_password():
+            if not password:
+                return Response(
+                    {'error': 'Password is required to delete your account.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if not user.check_password(password):
+                return Response(
+                    {'error': 'Incorrect password. Please try again.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        email = user.email or user.username
+        print(f"🗑️ Deleting account: {email} | type: {user.user_type}")
+
+        try:
+            user.delete()
+            print(f"✅ Account deleted: {email}")
+            return Response(
+                {'message': 'Your account has been permanently deleted.'},
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            print(f"❌ Account deletion error: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response(
+                {'error': 'Failed to delete account. Please contact support.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 class TripRequestViewSet(viewsets.ModelViewSet):
     serializer_class = TripRequestSerializer
     permission_classes = [IsAuthenticated]

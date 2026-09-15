@@ -40,6 +40,11 @@ router.register(r'subscriptions', OperatorSubscriptionViewSet, basename='subscri
 router.register(r'ratings', OperatorRatingViewSet, basename='rating')
 
 urlpatterns = [
+    # Assist routes MUST be registered before the support ViewSet router,
+    # otherwise /support/ask/ is treated as /support/<pk>/ and the AI echo-bug happens.
+    path('support/ask/', support_ask, name='support-ask'),
+    path('support/human-request/', support_human, name='support-human'),
+
     # API endpoints
     path('', include(router.urls)),
     path('auth/register/', AuthViewSet.as_view({'post': 'register'}), name='auth-register'),
@@ -47,6 +52,7 @@ urlpatterns = [
     path('auth/send-otp/', AuthViewSet.as_view({'post': 'send_otp'}), name='auth-send-otp'),
     path('auth/verify-otp/', AuthViewSet.as_view({'post': 'verify_otp'}), name='auth-verify-otp'),
     path('auth/update-profile/', AuthViewSet.as_view({'post': 'update_profile', 'put': 'update_profile'}), name='auth-update-profile'),
+    path('auth/delete-account/', AuthViewSet.as_view({'delete': 'delete_account'}), name='auth-delete-account'),
     path('auth/check-account/', AuthViewSet.as_view({'post': 'check_account'}), name='auth-check-account'),
     path('dashboard/stats/', dashboard_stats, name='dashboard-stats'),
 
@@ -62,8 +68,6 @@ urlpatterns = [
     path('boat-requests/', create_boat_request, name='boat-requests-create'),
     path('boat-requests/my/', my_boat_requests, name='boat-requests-my'),
     path('profile/', profile_view, name='profile'),
-    path('support/ask/', support_ask, name='support-ask'),
-    path('support/human-request/', support_human, name='support-human'),
     path('assist-settings/', assist_settings, name='assist-settings'),
     
     # Admin panel views
