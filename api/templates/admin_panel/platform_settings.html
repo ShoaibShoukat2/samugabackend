@@ -28,6 +28,19 @@
         <p class="text-xs text-gray-400 mt-1">New operators get full access free for this many days</p>
       </div>
 
+      <div class="mb-5">
+        <label class="block text-sm font-semibold text-gray-700 mb-2">BML account number</label>
+        <input type="text" name="bml_account" value="{{ settings.bml_account }}"
+               class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <p class="text-xs text-gray-400 mt-1">Shown on the public operator portal for bank transfer</p>
+      </div>
+
+      <div class="mb-6">
+        <label class="block text-sm font-semibold text-gray-700 mb-2">MIB account number</label>
+        <input type="text" name="mib_account" value="{{ settings.mib_account }}"
+               class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+
       <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
         <i class="fas fa-save mr-2"></i>Save Settings
       </button>

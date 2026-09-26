@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Operator portal · Samuga Travels</title>
+<style>
+  :root {
+    --navy: #0D2137;
+    --navy-2: #16324d;
+    --accent: #00B4D8;
+    --accent-soft: #E0F7FC;
+    --ink: #0F172A;
+    --muted: #64748B;
+    --line: #E2E8F0;
+    --bg: #F4F7FB;
+    --white: #fff;
+    --green: #15803D;
+    --green-bg: #ECFDF3;
+    --amber: #B45309;
+    --amber-bg: #FFFBEB;
+    --red: #B91C1C;
+    --red-bg: #FEF2F2;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  a { color: var(--navy); }
+  .top {
+    background: linear-gradient(160deg, var(--navy) 0%, #12304c 55%, #0e7490 140%);
+    color: white;
+    padding: 28px 20px 72px;
+  }
+  .top-inner, .wrap { max-width: 880px; margin: 0 auto; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: 0.2px; }
+  .mark {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: rgba(255,255,255,0.14);
+    display: grid; place-items: center; font-size: 18px;
+  }
+  .brand span { opacity: 0.75; font-weight: 500; }
+  h1 { margin: 22px 0 8px; font-size: 32px; line-height: 1.15; letter-spacing: -0.4px; }
+  .lede { margin: 0; max-width: 540px; color: #D6E4F0; font-size: 16px; line-height: 1.5; }
+  .wrap { padding: 0 16px 56px; margin-top: -44px; }
+  .grid { display: grid; grid-template-columns: 1fr 1.15fr; gap: 16px; align-items: start; }
+  .card {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 22px;
+    box-shadow: 0 10px 30px rgba(13, 33, 55, 0.06);
+  }
+  .price-kicker { color: var(--muted); font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+  .price { display: flex; align-items: baseline; gap: 8px; margin: 8px 0 4px; }
+  .price strong { font-size: 42px; letter-spacing: -1px; color: var(--navy); }
+  .price em { font-style: normal; color: var(--muted); font-weight: 600; }
+  .trial {
+    display: inline-block; margin: 8px 0 14px;
+    background: var(--accent-soft); color: #0E7490;
+    font-weight: 700; font-size: 13px; border-radius: 999px; padding: 6px 10px;
+  }
+  ul.perks { list-style: none; padding: 0; margin: 0; }
+  ul.perks li { padding: 8px 0 8px 26px; position: relative; color: #334155; font-size: 14px; }
+  ul.perks li:before { content: "✓"; position: absolute; left: 0; color: var(--green); font-weight: 800; }
+  .banks { margin-top: 16px; display: grid; gap: 8px; }
+  .bank {
+    border: 1px dashed #CBD5E1; border-radius: 12px; padding: 12px 14px; background: #F8FAFC;
+  }
+  .bank b { display: block; font-size: 12px; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
+  .bank span { font-size: 16px; font-weight: 700; color: var(--navy); word-break: break-all; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .tabs button, .ghost {
+    border: 1px solid var(--line); background: #F8FAFC; color: var(--navy);
+    border-radius: 999px; padding: 8px 14px; font-weight: 700; cursor: pointer; font-size: 14px;
+  }
+  .tabs button.active { background: var(--navy); color: white; border-color: var(--navy); }
+  label { display: block; font-size: 13px; font-weight: 700; color: #334155; margin: 12px 0 6px; }
+  input, textarea {
+    width: 100%; border: 1.5px solid var(--line); border-radius: 12px;
+    padding: 12px 14px; font-size: 15px; font-family: inherit; background: white; color: var(--ink);
+  }
+  textarea { min-height: 72px; resize: vertical; }
+  input:focus, textarea:focus { outline: 2px solid rgba(0,180,216,0.35); border-color: var(--accent); }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .btn {
+    width: 100%; margin-top: 16px; border: 0; border-radius: 12px;
+    background: var(--navy); color: white; font-weight: 700; font-size: 15px;
+    padding: 14px 16px; cursor: pointer;
+  }
+  .btn:hover { background: var(--navy-2); }
+  .btn.secondary { background: white; color: var(--navy); border: 1.5px solid var(--line); }
+  .alert { border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.45; margin-bottom: 12px; }
+  .alert.error { background: var(--red-bg); color: var(--red); }
+  .alert.ok { background: var(--green-bg); color: var(--green); }
+  .alert.wait { background: var(--amber-bg); color: var(--amber); }
+  .status-row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+  .pill { border-radius: 999px; padding: 6px 10px; font-size: 12px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
+  .pill.on { background: var(--green-bg); color: var(--green); }
+  .pill.off { background: var(--red-bg); color: var(--red); }
+  .meta { color: var(--muted); font-size: 14px; margin-top: 6px; }
+  .file {
+    border: 1.5px dashed #CBD5E1; border-radius: 12px; padding: 14px; background: #F8FAFC; font-size: 14px;
+  }
+  .links { display: flex; justify-content: space-between; gap: 12px; margin-top: 14px; font-size: 13px; }
+  footer { text-align: center; color: #94A3B8; font-size: 13px; padding-bottom: 28px; }
+  @media (max-width: 760px) {
+    h1 { font-size: 28px; }
+    .grid, .row { grid-template-columns: 1fr; }
+    .top { padding-bottom: 64px; }
+  }
+</style>
+</head>
+<body>
+  <header class="top">
+    <div class="top-inner">
+      <div class="brand"><div class="mark">⛵</div> Samuga Travels <span>Operator portal</span></div>
+      <h1>Run your boats on Samuga.</h1>
+      <p class="lede">Create your operator account here, then pay the monthly plan by bank transfer. After we check the slip, your account is active in the app.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="grid">
+      <section class="card">
+        <div class="price-kicker">Monthly plan</div>
+        <div class="price">
+          <strong>{{ settings.subscription_price|floatformat:0 }}</strong>
+          <em>MVR / month</em>
+        </div>
+        <div class="trial">First {{ settings.free_trial_days }} days free for new operators</div>
+        <ul class="perks">
+          <li>Receive trip requests from travellers</li>
+          <li>Send quotes and manage bookings</li>
+          <li>Boats, schedule, and operator dashboard</li>
+          <li>Reviewed by our team within 24 hours</li>
+        </ul>
+        <div class="banks">
+          <div class="bank"><b>BML account</b><span>{{ settings.bml_account|default:"Ask support for the account number" }}</span></div>
+          <div class="bank"><b>MIB account</b><span>{{ settings.mib_account|default:"Ask support for the account number" }}</span></div>
+          <div class="bank"><b>Account name</b><span>Samuga Travels</span></div>
+        </div>
+      </section>
+
+      <section class="card">
+        {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
+        {% if success %}<div class="alert ok">{{ success }}</div>{% endif %}
+
+        {% if panel == 'account' and operator %}
+          <div class="status-row">
+            <div>
+              <div class="price-kicker">{{ operator.company_name }}</div>
+              <h2 style="margin:6px 0 0; font-size:22px;">{{ operator.contact_person }}</h2>
+              <p class="meta">{{ operator.email }}{% if days_left > 0 %} · {{ days_left }} day{{ days_left|pluralize }} left{% endif %}</p>
+            </div>
+            {% if operator.subscription_status == 'active' %}
+              <span class="pill on">Active</span>
+            {% else %}
+              <span class="pill off">{{ operator.subscription_status }}</span>
+            {% endif %}
+          </div>
+
+          {% if pending %}
+            <div class="alert wait" style="margin-top:16px;">
+              Payment is with our team for review
+              {% if pending.created_at %} (sent {{ pending.created_at|date:"d M Y" }}){% endif %}.
+              You will be able to work in the app once it is approved.
+            </div>
+          {% else %}
+            <h3 style="margin:22px 0 4px; font-size:16px;">Pay {{ settings.subscription_price|floatformat:0 }} MVR</h3>
+            <p class="meta">Transfer the amount to BML or MIB, then upload the slip. The next period is added after approval.</p>
+            <form method="post" enctype="multipart/form-data">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="pay">
+              <label for="transaction_id">Transfer reference (optional)</label>
+              <input id="transaction_id" name="transaction_id" placeholder="Bank reference number" autocomplete="off">
+              <label for="payment_proof">Payment slip</label>
+              <input class="file" id="payment_proof" name="payment_proof" type="file" accept="image/*" required>
+              <button class="btn" type="submit">Submit payment</button>
+            </form>
+          {% endif %}
+
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="logout">
+            <button class="btn secondary" type="submit">Sign out</button>
+          </form>
+
+        {% elif panel == 'complete' %}
+          <h2 style="margin-top:0;">Add your business</h2>
+          <p class="meta">Signed in as {{ request.user.email }}. Tell us about the company so we can open an operator account.</p>
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="complete">
+            <label for="company_name">Company name</label>
+            <input id="company_name" name="company_name" value="{{ form.company_name|default:'' }}" required>
+            <label for="phone_number">Phone</label>
+            <input id="phone_number" name="phone_number" value="{{ form.phone_number|default:'' }}" placeholder="+960 XXX XXXX" required>
+            <label for="business_license">Business license (optional)</label>
+            <input id="business_license" name="business_license" value="{{ form.business_license|default:'' }}">
+            <label for="service_islands">Islands you serve</label>
+            <textarea id="service_islands" name="service_islands" required placeholder="Male, Hulhumale, Maafushi">{{ form.service_islands|default:'' }}</textarea>
+            <button class="btn" type="submit">Create operator account</button>
+          </form>
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="logout">
+            <button class="btn secondary" type="submit">Sign out</button>
+          </form>
+
+        {% else %}
+          <div class="tabs">
+            <button type="button" class="{% if panel != 'login' %}active{% endif %}" data-tab="register">Create account</button>
+            <button type="button" class="{% if panel == 'login' %}active{% endif %}" data-tab="login">Sign in</button>
+          </div>
+
+          <form method="post" id="register-form" {% if panel == 'login' %}hidden{% endif %}>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="register">
+            <div class="row">
+              <div>
+                <label for="first_name">First name</label>
+                <input id="first_name" name="first_name" value="{{ form.first_name|default:'' }}" required>
+              </div>
+              <div>
+                <label for="last_name">Last name</label>
+                <input id="last_name" name="last_name" value="{{ form.last_name|default:'' }}">
+              </div>
+            </div>
+            <label for="reg_email">Email</label>
+            <input id="reg_email" name="email" type="email" value="{{ form.email|default:'' }}" required>
+            <label for="reg_phone">Phone</label>
+            <input id="reg_phone" name="phone_number" value="{{ form.phone_number|default:'' }}" placeholder="+960 XXX XXXX">
+            <div class="row">
+              <div>
+                <label for="password">Password</label>
+                <input id="password" name="password" type="password" minlength="6" required>
+              </div>
+              <div>
+                <label for="confirm_password">Confirm</label>
+                <input id="confirm_password" name="confirm_password" type="password" minlength="6" required>
+              </div>
+            </div>
+            <label for="reg_company">Company name</label>
+            <input id="reg_company" name="company_name" value="{{ form.company_name|default:'' }}" required>
+            <label for="reg_license">Business license (optional)</label>
+            <input id="reg_license" name="business_license" value="{{ form.business_license|default:'' }}">
+            <label for="reg_islands">Islands you serve</label>
+            <textarea id="reg_islands" name="service_islands" required placeholder="Male, Hulhumale, Maafushi">{{ form.service_islands|default:'' }}</textarea>
+            <button class="btn" type="submit">Create operator account</button>
+          </form>
+
+          <form method="post" id="login-form" {% if panel != 'login' %}hidden{% endif %}>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="login">
+            <label for="login_email">Email</label>
+            <input id="login_email" name="email" type="email" value="{{ form.email|default:'' }}" required>
+            <label for="login_password">Password</label>
+            <input id="login_password" name="password" type="password" required>
+            <button class="btn" type="submit">Sign in</button>
+          </form>
+          <p class="meta" style="margin-top:14px;">Already using the Android app? Sign in with the same email. New operators get {{ settings.free_trial_days }} free days, then pay {{ settings.subscription_price|floatformat:0 }} MVR per month here.</p>
+        {% endif %}
+      </section>
+    </div>
+    <div class="links">
+      <a href="/support/">Customer support</a>
+      <a href="/privacy-policy/">Privacy policy</a>
+    </div>
+  </main>
+  <footer>© 2026 Samuga Travels</footer>
+  <script>
+    document.querySelectorAll('[data-tab]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var tab = btn.getAttribute('data-tab');
+        document.getElementById('register-form').hidden = tab !== 'register';
+        document.getElementById('login-form').hidden = tab !== 'login';
+        document.querySelectorAll('[data-tab]').forEach(function (b) {
+          b.classList.toggle('active', b === btn);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

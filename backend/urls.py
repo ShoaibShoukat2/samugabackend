@@ -3,6 +3,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import HttpResponse
+from api.operator_portal_views import operator_portal
 
 def privacy_policy(request):
     html = """<!DOCTYPE html>
@@ -94,7 +95,7 @@ def support_page(request):
     <p>Please contact us at samugacreative@gmail.com as soon as possible if you need to cancel. Cancellation policies depend on the individual operator.</p>
 
     <p class="faq-q">I'm a boat operator. How do I join?</p>
-    <p>Download the SamugaTravels app, register an account, and select "Apply as Operator". Your first 30 days are completely free.</p>
+    <p>Open the <a href="/operators/">operator portal</a>, create your business account, and pay the monthly plan by bank transfer. Your first month starts with a free trial. iPhone users register here instead of inside the app.</p>
 
     <p class="faq-q">How do I delete my account?</p>
     <p>Open the app → Profile → scroll to the bottom → tap "Delete Account". You'll be asked to confirm with your password. All your data will be permanently removed.</p>
@@ -128,6 +129,7 @@ def support_page(request):
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
+    path('operators/', operator_portal, name='operator_portal'),
     path('privacy-policy/', privacy_policy, name='privacy_policy'),
     path('support/', support_page, name='support_page'),
     path('', support_page, name='home'),

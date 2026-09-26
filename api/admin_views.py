@@ -721,6 +721,10 @@ def platform_settings(request):
         try:
             settings.subscription_price = Decimal(subscription_fee)
             settings.free_trial_days = int(free_trial_days)
+            if 'bml_account' in request.POST:
+                settings.bml_account = request.POST.get('bml_account', '').strip()
+            if 'mib_account' in request.POST:
+                settings.mib_account = request.POST.get('mib_account', '').strip()
             settings.updated_by = request.user
             settings.save()
             messages.success(request, 'Platform settings updated successfully!')

@@ -35,6 +35,7 @@ CSRF_TRUSTED_ORIGINS = [
     'http://172.20.10.2:8000',
     'https://*.ngrok.io',  # Add your ngrok URL here
     'https://*.ngrok-free.app',  # New ngrok domain
+    'https://samugatravels1.pythonanywhere.com',
 ]
 
 AUTH_USER_MODEL = 'api.User'
